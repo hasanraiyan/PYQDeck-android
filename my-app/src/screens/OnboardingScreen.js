@@ -10,7 +10,7 @@ import {
   Platform,
   SafeAreaView,
 } from 'react-native';
-import Swiper from 'react-native-swiper';
+import Carousel from 'react-native-reanimated-carousel';
 import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../context/AppContext';
 import { Easing } from 'react-native';
@@ -72,7 +72,7 @@ export default function OnboardingScreen() {
   const navigation = useNavigation();
   const { setOnboardingCompleted } = useApp();
   const [activeSlide, setActiveSlide] = useState(0);
-  const swiperRef = useRef(null);
+  const carouselRef = useRef(null);
 
   // Animated values for button morph transitions
   const mainButtonScale = useRef(new Animated.Value(1)).current;
@@ -95,8 +95,8 @@ export default function OnboardingScreen() {
   };
 
   const handleNext = () => {
-    if (swiperRef.current && activeSlide < slides.length - 1) {
-      swiperRef.current.scrollBy(1);
+    if (activeSlide < slides.length - 1 && carouselRef.current) {
+      carouselRef.current.scrollTo({index: activeSlide + 1, animated: true});
     }
   };
 
@@ -143,17 +143,36 @@ export default function OnboardingScreen() {
             style={styles.stepIndicator}
             accessibilityLiveRegion="polite"
           >
-            {`Step ${activeSlide + 1} of ${slides.length}`}
+            {`Step ${Math.floor(activeSlide + 1)} of ${slides.length}`}
           </Text>
         </View>
-        <Swiper
-          ref={swiperRef}
+        <Carousel
+          ref={carouselRef}
+          width={width}
+          height={height * 0.67}
+          data={slides}
+          scrollAnimationDuration={500}
+          pagingEnabled
           loop={false}
-          onIndexChanged={(index) => setActiveSlide(index)}
-          showsPagination={false}
-          showsButtons={false} // We use custom footer buttons
-        >
-          {slides.map((slide) => (
+          snapEnabled
+          style={{ flexGrow: 0, marginBottom: 0, overflow: 'visible' }}
+          mode="horizontal-stack"
+          modeConfig={{
+            snapDirection: 'left',
+            stackInterval: 9,
+            showLength: 1,
+            opacityInterval: 1,
+            scaleInterval: 0,
+          }}
+          panGestureHandlerProps={{
+            activeOffsetX:
+              activeSlide === 0
+                ? [0, 10]
+                : activeSlide === slides.length - 1
+                ? [-10, 0]
+                : [-10, 10],
+          }}
+          renderItem={({ item: slide }) => (
             <View key={slide.key} style={styles.slideContent}>
               {/* Large Vector Icon above Image */}
               <View style={styles.iconContainer}>
@@ -176,8 +195,21 @@ export default function OnboardingScreen() {
                 <Text style={styles.actionHint}>{slide.actionHint}</Text>
               </View>
             </View>
-          ))}
-        </Swiper>
+          )}
+          customAnimation={null}
+          windowSize={1}
+          removeClippedSubviews={true}
+          defaultIndex={0}
+          customConfig={() => ({ type: 'positive', viewCount: 1 })}
+          onSnapToItem={(index) => setActiveSlide(index)}
+          enabled /* allow touch scroll */
+          activeSlideOffset={0}
+          panGestureHandlerSimultaneousHandlers={undefined}
+          scrollEnabled
+          enableSnap
+          autoPlay={false}
+          currentIndex={activeSlide}
+        />
 
         {/* Pagination anchored to bottom, above footer divider */}
         {/* Footer with divider and horizontal button row */}
@@ -245,23 +277,9 @@ export default function OnboardingScreen() {
                   { transform: [{ scale: mainButtonScale }], width: getButtonWidth(isLastSlide) },
                 ]}
               >
-                {/* Cross-fading/morphing labels */}
-                <Animated.Text
-                  style={[
-                    styles.mainButtonText,
-                    { position: 'absolute', opacity: mainLabelOpacity },
-                  ]}
-                >
-                  Next
-                </Animated.Text>
-                <Animated.Text
-                  style={[
-                    styles.mainButtonText,
-                    { position: 'absolute', opacity: getStartedLabelOpacity },
-                  ]}
-                >
-                  {isLastSlide ? 'Get Started' : 'OK'}
-                </Animated.Text>
+                <Text style={styles.mainButtonText}>
+                  {isLastSlide ? 'Get Started' : 'Next'}
+                </Text>
               </Animated.View>
             </TouchableOpacity>
           </View>
@@ -394,12 +412,6 @@ const styles = StyleSheet.create({
   },
   skipButtonTouchable: {
      padding: 10, // Hit area for skip
-  },
-  textContainer: {
-    alignItems: 'center',
-    paddingHorizontal: width * 0.05,
-    marginTop: 8,
-    marginBottom: 0,
   },
   actionHint: {
     fontSize: 14,
