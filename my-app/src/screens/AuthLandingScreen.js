@@ -47,7 +47,7 @@ export default function AuthLandingScreen() {
 
         {/* Illustration */}
         <Image
-          source={require('../assets/onboarding1.png')} // Ensure this path is correct
+          source={require('../../assets/onboarding1.png')} // Corrected path - should resolve now
           style={styles.illustration}
           resizeMode="contain"
           accessibilityLabel="Education Illustration"

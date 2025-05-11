@@ -78,7 +78,7 @@ const ResetPasswordScreen = ({ route, navigation }) => {
         <View style={styles.formContainer}>
           <View style={{ alignItems: 'center', marginBottom: 16 }}>
             <Image
-              source={require('../../assets/onboarding1.png')}
+              source={require('../../../assets/onboarding1.png')}
               style={{
                 width: width * 0.48,
                 height: width * 0.36,
