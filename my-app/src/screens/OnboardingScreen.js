@@ -126,15 +126,10 @@ export default function OnboardingScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Step Progress Label Only */}
-        <View style={{ marginTop: 32, marginBottom: 18, alignItems: 'center', height: 22 }}>
+        {/* Step Progress Label */}
+        <View style={styles.stepIndicatorWrapper}>
           <Text
-            style={{
-              color: COLORS.primaryDark,
-              fontSize: 18,
-              fontWeight: '700',
-              opacity: 0.92,
-            }}
+            style={styles.stepIndicator}
             accessibilityLiveRegion="polite"
           >
             {`Step ${activeSlide + 1} of ${slides.length}`}
@@ -144,18 +139,21 @@ export default function OnboardingScreen() {
           ref={swiperRef}
           loop={false}
           onIndexChanged={(index) => setActiveSlide(index)}
-          dotStyle={styles.dot}
-          activeDotStyle={styles.activeDot}
-          paginationStyle={styles.pagination}
-          showsPagination={true}
+          showsPagination={false}
           showsButtons={false} // We use custom footer buttons
         >
           {slides.map((slide) => (
             <View key={slide.key} style={styles.slideContent}>
-              {/* Image takes up a significant portion, then text below */}
+              {/* Brand Header Block: Logo + Name */}
+              <View style={styles.brandBlock}>
+                <Image source={require('../../assets/app-logo.png')} style={styles.appLogo} accessibilityLabel="App Logo" />
+                <Text style={styles.appName}>PYQDeck</Text>
+              </View>
+              {/* Image/Illustration */}
               <View style={styles.imageContainer}>
                 <Image source={slide.image} style={styles.image} />
               </View>
+              {/* Headline and Description */}
               <View style={styles.textContainer}>
                 <Text style={styles.title}>{slide.title}</Text>
                 <Text style={styles.description}>{slide.description}</Text>
@@ -164,8 +162,18 @@ export default function OnboardingScreen() {
           ))}
         </Swiper>
 
+        {/* Pagination anchored to bottom, above footer divider */}
         {/* Footer with divider and horizontal button row */}
         <View style={styles.footer}>
+          {/* Pagination dots above the divider */}
+          <View style={styles.paginationRow}>
+            {slides.map((_, idx) => (
+              <View
+                key={idx}
+                style={activeSlide === idx ? styles.activeDot : styles.dot}
+              />
+            ))}
+          </View>
           {/* Divider on top of buttons */}
           <View style={styles.footerDivider} />
 
@@ -264,15 +272,16 @@ const styles = StyleSheet.create({
   slideContent: { // Content within each Swiper slide
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center', // Center content vertically
-    paddingHorizontal: width * 0.08, // Generous horizontal padding
+    justifyContent: 'flex-start',
+    paddingHorizontal: width * 0.08,
+    paddingTop: 0,
   },
   imageContainer: {
-    width: width * 0.8, // Image width
-    height: width * 0.8 * 0.85, // Aspect ratio for image (adjust as needed)
+    width: width * 0.8,
+    height: width * 0.8 * 0.85,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: height * 0.05, // Space between image and text
+    marginBottom: 20, // Reduced, as main text spacing handled elsewhere
   },
   image: {
     width: '100%',
@@ -281,7 +290,9 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     alignItems: 'center',
-    paddingHorizontal: width * 0.05, // Padding for text block
+    paddingHorizontal: width * 0.05,
+    marginTop: 8,
+    marginBottom: 0,
   },
   title: {
     fontSize: Platform.OS === 'ios' ? 28 : 26, // Large, prominent title
@@ -381,6 +392,50 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     // fontFamily: 'YourApp-SemiBold',
+  },
+  brandBlock: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24, // Spacing below brand for block harmony
+  },
+  appLogo: {
+    width: 92,
+    height: 92,
+    resizeMode: 'contain',
+    alignSelf: 'center',
+    marginTop: 0,
+    marginBottom: 4,
+  },
+  appName: {
+    marginTop: 4,
+    marginBottom: 0,
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.primary,
+    textAlign: 'center',
+    letterSpacing: 0.7,
+  },
+  paginationRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+    minHeight: 20,
+  },
+  stepIndicatorWrapper: {
+    marginTop: 28,
+    marginBottom: 14,
+    alignItems: 'center',
+    minHeight: 18,
+    justifyContent: 'center'
+  },
+  stepIndicator: {
+    color: COLORS.textSecondary,
+    fontSize: 13,
+    fontWeight: '500',
+    opacity: 0.78,
+    letterSpacing: 0.5,
+    textAlign: 'center',
   },
 });
 
