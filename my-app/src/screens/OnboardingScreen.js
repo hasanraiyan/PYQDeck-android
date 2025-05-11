@@ -21,19 +21,26 @@ const { width, height } = Dimensions.get('window');
 
 // --- Updated Color Palette Based on Analysis ---
 const COLORS = {
-  primary: '#7C6BEE', // Adjusted primary purple (matches example better)
-  primaryDark: '#5F4BE2', // Slightly darker for press states or emphasis
-
+  primary: '#7C6BEE',
+  primaryDark: '#5F4BE2',
   white: '#FFFFFF',
-  background: '#FFFFFF', // Clean white background
+  background: '#FFFFFF',
+  textTitle: '#1D2737',
+  textBody: '#4A5568',
+  textSecondary: '#6B7280',
+  inactiveDot: '#D1D5DB',
+  lightBorder: '#E5E7EB',
+  shadowColor: '#A0AEC0',
+};
 
-  textTitle: '#1D2737', // Dark, strong title color (from example)
-  textBody: '#4A5568', // Softer gray for descriptions
-  textSecondary: '#6B7280', // For skip text, less important info
-
-  inactiveDot: '#D1D5DB', // Light gray for inactive dots (from example)
-  lightBorder: '#E5E7EB', // For subtle borders if needed
-  shadowColor: '#A0AEC0', // For soft shadows (though examples are quite flat)
+// Helper to generate Pollinations onboarding image URLs with style keywords
+const getPollinationsImageUrl = (prompt) => {
+  // Add style keywords from the example images to the prompt
+  const stylePrompt =
+    "white background, modern flat illustration, character design, educational tech, clean lines, vibrant purple and blue color palette, minimal background, centered composition";
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(
+    prompt + ", " + stylePrompt
+  )}`;
 };
 
 export default function OnboardingScreen() {
@@ -45,7 +52,7 @@ export default function OnboardingScreen() {
       title: 'Browse PYQ Questions',
       description:
         'Easily search and access thousands of previous year questions from top universities and exams.',
-      image: require('../../assets/onboarding1.png'),
+      image: { uri: getPollinationsImageUrl("student searching for previous year questions on a laptop with books and question marks") },
       icon: (props) => <Ionicons name="search" {...props} />,
       actionHint: 'Swipe categories to explore question banks',
     },
@@ -54,7 +61,7 @@ export default function OnboardingScreen() {
       title: 'Track Your Progress',
       description:
         'Mark questions as completed and visualize your learning progress with personalized statistics.',
-      image: require('../../assets/onboarding2.png'),
+      image: { uri: getPollinationsImageUrl("student tracking learning progress with statistics, charts, and checkmarks") },
       icon: (props) => <Ionicons name="stats-chart" {...props} />,
       actionHint: 'Tap completed questions to track progress',
     },
@@ -63,7 +70,7 @@ export default function OnboardingScreen() {
       title: 'Personalized Learning',
       description:
         'Get smart recommendations based on your performance and study patterns to maximize your results.',
-      image: require('../../assets/onboarding3.png'),
+      image: { uri: getPollinationsImageUrl("personalized study recommendations for a student, target board, smart AI suggestions") },
       icon: (props) => <MaterialCommunityIcons name="target" {...props} />,
       actionHint: 'Review your stats for personalized suggestions',
     },

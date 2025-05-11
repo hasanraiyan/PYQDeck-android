@@ -30,6 +30,15 @@ const COLORS = {
   shadowColor: '#A0AEC0',
 };
 
+// Helper to generate Pollinations onboarding image URLs with style keywords
+const getPollinationsImageUrl = (prompt) => {
+  const stylePrompt =
+    "white background, modern flat illustration, character design, educational tech, clean lines, vibrant purple and blue color palette, minimal background, centered composition";
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(
+    prompt + ", " + stylePrompt
+  )}`;
+};
+
 const ResetPasswordScreen = ({ route, navigation }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -78,7 +87,11 @@ const ResetPasswordScreen = ({ route, navigation }) => {
         <View style={styles.formContainer}>
           <View style={{ alignItems: 'center', marginBottom: 16 }}>
             <Image
-              source={require('../../../assets/onboarding1.png')}
+              source={{
+                uri: getPollinationsImageUrl(
+                  "student resetting password on a laptop, secure, technology"
+                ),
+              }}
               style={{
                 width: width * 0.48,
                 height: width * 0.36,

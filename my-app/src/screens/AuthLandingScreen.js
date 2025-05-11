@@ -25,6 +25,15 @@ const COLORS = {
   google: '#4285F4',
 };
 
+// Helper to generate Pollinations onboarding image URLs with style keywords
+const getPollinationsImageUrl = (prompt) => {
+  const stylePrompt =
+    "white background, modern flat illustration, character design, educational tech, clean lines, vibrant purple and blue color palette, minimal background, centered composition";
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(
+    prompt + ", " + stylePrompt
+  )}`;
+};
+
 export default function AuthLandingScreen() {
   const navigation = useNavigation();
 
@@ -47,7 +56,11 @@ export default function AuthLandingScreen() {
 
         {/* Illustration */}
         <Image
-          source={require('../../assets/onboarding1.png')} // Corrected path - should resolve now
+          source={{
+            uri: getPollinationsImageUrl(
+              "student searching previous year questions, books, laptop, education"
+            ),
+          }}
           style={styles.illustration}
           resizeMode="contain"
           accessibilityLabel="Education Illustration"
