@@ -10,14 +10,39 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Dimensions,
+  Image
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
+
+const { width, height } = Dimensions.get('window');
+
+// Consistent palette with onboarding/login
+const COLORS = {
+  primary: '#7C6BEE',
+  primaryDark: '#5F4BE2',
+  white: '#FFFFFF',
+  background: '#FFFFFF',
+  textTitle: '#1D2737',
+  textBody: '#4A5568',
+  textSecondary: '#6B7280',
+  inactiveDot: '#D1D5DB',
+  lightBorder: '#E5E7EB',
+  shadowColor: '#A0AEC0',
+};
 
 const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [nameFocused, setNameFocused] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  const [confirmFocused, setConfirmFocused] = useState(false);
   const { register, loading, error } = useAuth();
 
   const handleRegister = async () => {
@@ -49,57 +74,144 @@ const RegisterScreen = ({ navigation }) => {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.formContainer}>
-          <Text style={styles.title}>Create Account</Text>
+          {/* Big Onboarding Illustration */}
+          <View style={{ alignItems: 'center', marginBottom: 16 }}>
+            <Image
+              source={require('../../assets/onboarding1.png')}
+              style={{
+                width: width * 0.52,
+                height: width * 0.4,
+                resizeMode: 'contain',
+                marginTop: 10,
+                marginBottom: 2,
+              }}
+            />
+          </View>
+          <Text style={styles.title}>
+            Create <Text style={{ color: COLORS.primaryDark }}>Account</Text>
+          </Text>
           <Text style={styles.subtitle}>Sign up to get started</Text>
 
           <View style={styles.inputContainer}>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                nameFocused && { borderColor: COLORS.primaryDark, borderWidth: 2 }
+              ]}
               placeholder="Full Name"
               value={name}
               onChangeText={setName}
               autoCapitalize="words"
+              onFocus={() => setNameFocused(true)}
+              onBlur={() => setNameFocused(false)}
+              placeholderTextColor={COLORS.textSecondary}
             />
           </View>
 
           <View style={styles.inputContainer}>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                emailFocused && { borderColor: COLORS.primaryDark, borderWidth: 2 }
+              ]}
               placeholder="Email"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
+              onFocus={() => setEmailFocused(true)}
+              onBlur={() => setEmailFocused(false)}
+              placeholderTextColor={COLORS.textSecondary}
             />
           </View>
 
           <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-            />
+            <View style={{ position: 'relative', justifyContent: 'center' }}>
+              <TextInput
+                style={[
+                  styles.input,
+                  passwordFocused && { borderColor: COLORS.primaryDark, borderWidth: 2 }
+                ]}
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
+                placeholderTextColor={COLORS.textSecondary}
+              />
+              <TouchableOpacity
+                style={{
+                  position: 'absolute',
+                  right: 14,
+                  top: 0,
+                  height: '100%',
+                  justifyContent: 'center',
+                  paddingLeft: 16,
+                  paddingRight: 4,
+                }}
+                onPress={() => setShowPassword((v) => !v)}
+                accessibilityRole="button"
+                accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={22}
+                  color={COLORS.textSecondary}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm Password"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-              autoCapitalize="none"
-            />
+            <View style={{ position: 'relative', justifyContent: 'center' }}>
+              <TextInput
+                style={[
+                  styles.input,
+                  confirmFocused && { borderColor: COLORS.primaryDark, borderWidth: 2 }
+                ]}
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirmPassword}
+                autoCapitalize="none"
+                onFocus={() => setConfirmFocused(true)}
+                onBlur={() => setConfirmFocused(false)}
+                placeholderTextColor={COLORS.textSecondary}
+              />
+              <TouchableOpacity
+                style={{
+                  position: 'absolute',
+                  right: 14,
+                  top: 0,
+                  height: '100%',
+                  justifyContent: 'center',
+                  paddingLeft: 16,
+                  paddingRight: 4,
+                }}
+                onPress={() => setShowConfirmPassword((v) => !v)}
+                accessibilityRole="button"
+                accessibilityLabel={showConfirmPassword ? "Hide password" : "Show password"}
+              >
+                <Ionicons
+                  name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={22}
+                  color={COLORS.textSecondary}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <TouchableOpacity
-            style={styles.registerButton}
+            style={[
+              styles.registerButton,
+              (loading || !name || !email || !password || !confirmPassword) && { opacity: 0.5 }
+            ]}
             onPress={handleRegister}
-            disabled={loading}
+            disabled={loading || !name || !email || !password || !confirmPassword}
+            activeOpacity={0.85}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
@@ -130,61 +242,80 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   formContainer: {
-    padding: 20,
+    paddingHorizontal: width * 0.08,
+    paddingVertical: height * 0.05,
     width: '100%',
-    maxWidth: 400,
+    maxWidth: 420,
     alignSelf: 'center',
+    backgroundColor: COLORS.background,
   },
   title: {
-    fontSize: 32,
+    fontSize: Platform.OS === 'ios' ? 28 : 26,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
+    color: COLORS.textTitle,
+    marginBottom: 10,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 32,
+    fontSize: Platform.OS === 'ios' ? 16 : 15,
+    color: COLORS.textBody,
+    marginBottom: 24,
     textAlign: 'center',
+    lineHeight: Platform.OS === 'ios' ? 24 : 22,
   },
   inputContainer: {
     marginBottom: 16,
   },
   input: {
-    backgroundColor: '#f5f5f5',
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: COLORS.white,
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: COLORS.lightBorder,
+    color: COLORS.textTitle,
+    shadowColor: COLORS.shadowColor,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 1.5,
+    elevation: 1,
   },
   registerButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 15,
+    borderRadius: 28,
     alignItems: 'center',
-    marginBottom: 24,
+    justifyContent: 'center',
+    marginBottom: 25,
+    minWidth: width * 0.27,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 7,
+    elevation: 4,
   },
   registerButtonText: {
-    color: '#fff',
+    color: COLORS.white,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    textAlign: 'center',
   },
   loginContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 4,
   },
   loginText: {
-    color: '#666',
+    color: COLORS.textBody,
     fontSize: 14,
   },
   loginLink: {
-    color: '#007AFF',
+    color: COLORS.primary,
     fontSize: 14,
     fontWeight: 'bold',
   },
 });
 
-export default RegisterScreen; 
+export default RegisterScreen;
