@@ -185,7 +185,8 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     setLoading(true);
     try {
-      await AsyncStorage.multiRemove(['auth_token', 'user_data']);
+      // Wipe ALL data from AsyncStorage on logout for full data erase
+      await AsyncStorage.clear();
       setToken(null);
       setCurrentUser(null);
     } catch (error) {
