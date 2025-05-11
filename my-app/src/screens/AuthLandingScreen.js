@@ -33,12 +33,14 @@ export default function AuthLandingScreen() {
       <View style={styles.container}>
         {/* Logo and Title Block */}
         <View style={styles.topSection}>
-          <Image
-            source={require('../../assets/app-logo.png')} // Ensure this path is correct
-            style={styles.logo}
-            resizeMode="contain"
-            accessibilityLabel="PYQDeck logo"
-          />
+          <View style={styles.logoBgLanding}>
+            <Image
+              source={require('../../assets/app-logo.png')}
+              style={styles.logoInCircleLanding}
+              resizeMode="contain"
+              accessibilityLabel="PYQDeck logo"
+            />
+          </View>
           <Text style={styles.appTitle}>PYQDeck</Text>
           <Text style={styles.subtitle}>Your smart BEU PYQ companion</Text>
         </View>
@@ -125,10 +127,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  logo: {
-    width: 88,
-    height: 88,
-    marginBottom: 2,
+  logoBgLanding: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#ede9fe',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    shadowColor: COLORS.primaryDark,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.13,
+    shadowRadius: 7,
+    elevation: 2,
+  },
+  logoInCircleLanding: {
+    width: 68,
+    height: 68,
   },
   appTitle: {
     fontSize: 32,

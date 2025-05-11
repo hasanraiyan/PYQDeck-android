@@ -158,7 +158,11 @@ export default function OnboardingScreen() {
               {/* Large Vector Icon above Image */}
               <View style={styles.iconContainer}>
                 <View style={styles.iconBg}>
-                  {slide.icon({ size: 40, color: COLORS.primaryDark })}
+                  <Image
+                    source={require('../../assets/app-logo.png')}
+                    style={styles.logoIconInCircle}
+                    accessibilityLabel="App Logo"
+                  />
                 </View>
               </View>
               {/* Image/Illustration */}
@@ -308,6 +312,11 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
     marginBottom: 0,
+  },
+  logoIconInCircle: {
+    width: 54,
+    height: 54,
+    resizeMode: 'contain',
   },
   imageContainerLarge: {
     width: width * 0.92,

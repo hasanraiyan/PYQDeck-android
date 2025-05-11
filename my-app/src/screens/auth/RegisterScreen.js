@@ -113,18 +113,16 @@ const RegisterScreen = ({ navigation }) => {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.formContainer}>
-          {/* Big Onboarding Illustration */}
-          <View style={{ alignItems: 'center', marginBottom: 16 }}>
-            <Image
-              source={require('../../assets/onboarding1.png')}
-              style={{
-                width: width * 0.52,
-                height: width * 0.4,
-                resizeMode: 'contain',
-                marginTop: 10,
-                marginBottom: 2,
-              }}
-            />
+          {/* App Logo in circular background */}
+          <View style={{ alignItems: 'center', marginBottom: 10 }}>
+            <View style={styles.logoBgAuth}>
+              <Image
+                source={require('../../../assets/app-logo.png')}
+                style={styles.logoInCircleAuth}
+                resizeMode="contain"
+                accessibilityLabel="PYQDeck logo"
+              />
+            </View>
           </View>
           <Text style={styles.title}>
             Create <Text style={{ color: COLORS.primaryDark }}>Account</Text>
@@ -363,6 +361,24 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  logoBgAuth: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#ede9fe',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 7,
+    shadowColor: COLORS.primaryDark,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 7,
+    elevation: 2,
+  },
+  logoInCircleAuth: {
+    width: 48,
+    height: 48,
   },
 });
 
