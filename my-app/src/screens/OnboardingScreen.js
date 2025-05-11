@@ -53,19 +53,19 @@ export default function OnboardingScreen() {
       key: '1',
       title: 'Browse PYQ Questions', // Or "Discover BEU PYQs Easily"
       description: 'Access thousands of previous year questions from various universities and exams.',
-      image: { uri: getPollinationsImageUrl('Student character browsing a digital library of academic questions on a large screen or mobile device.') },
+      image: require('../assets/onboarding1.png'),
     },
     {
       key: '2',
       title: 'Track Your Progress',
       description: 'Mark questions as completed and track your learning progress over time.',
-      image: { uri: getPollinationsImageUrl('Student character looking at a progress chart or checklist for study achievements.') },
+      image: require('../assets/onboarding2.png'),
     },
     {
       key: '3',
       title: 'Personalized Learning', // Or "Smart Recommendations For You"
       description: 'Get tailored question recommendations based on your learning patterns.',
-      image: { uri: getPollinationsImageUrl('AI assistant or algorithm providing personalized study suggestions to a student.') },
+      image: require('../assets/onboarding3.png'),
     },
   ];
 
@@ -95,6 +95,20 @@ export default function OnboardingScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
+        {/* Step Progress Label Only */}
+        <View style={{ marginTop: 32, marginBottom: 18, alignItems: 'center', height: 22 }}>
+          <Text
+            style={{
+              color: COLORS.primaryDark,
+              fontSize: 18,
+              fontWeight: '700',
+              opacity: 0.92,
+            }}
+            accessibilityLiveRegion="polite"
+          >
+            {`Step ${activeSlide + 1} of ${slides.length}`}
+          </Text>
+        </View>
         <Swiper
           ref={swiperRef}
           loop={false}
@@ -102,6 +116,7 @@ export default function OnboardingScreen() {
           dotStyle={styles.dot}
           activeDotStyle={styles.activeDot}
           paginationStyle={styles.pagination}
+          showsPagination={true}
           showsButtons={false} // We use custom footer buttons
         >
           {slides.map((slide) => (
@@ -118,50 +133,51 @@ export default function OnboardingScreen() {
           ))}
         </Swiper>
 
-        {/* Footer with pagination and buttons */}
+        {/* Footer with divider and horizontal button row */}
         <View style={styles.footer}>
-            {/* Horizontal divider above footer buttons */}
-            <View style={styles.footerDivider} />
+          {/* Divider on top of buttons */}
+          <View style={styles.footerDivider} />
 
+          {/* Horizontal row of buttons */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
             {/* Skip Button - Only if not on the last slide */}
             {!isLastSlide && (
-                <TouchableOpacity
-                    style={styles.skipButtonTouchable}
-                    onPressIn={() => onPressIn('skip')}
-                    onPressOut={() => onPressOut('skip')}
-                    onPress={handleDone}
-                >
-                    <Animated.View style={{ transform: [{ scale: skipButtonScale }] }}>
-                        <Text style={styles.skipButtonText}>Skip</Text>
-                    </Animated.View>
-                </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.skipButtonTouchable}
+                onPressIn={() => onPressIn('skip')}
+                onPressOut={() => onPressOut('skip')}
+                onPress={handleDone}
+              >
+                <Animated.View style={{ transform: [{ scale: skipButtonScale }] }}>
+                  <Text style={styles.skipButtonText}>Skip</Text>
+                </Animated.View>
+              </TouchableOpacity>
             )}
 
             {/* Spacer to push Next/Get Started button to the right if Skip is present */}
-            {!isLastSlide && <View style={{flex:1}} /> }
-    
+            {!isLastSlide && <View style={{ flex: 1 }} />}
 
             {/* Next / Get Started Button */}
             <TouchableOpacity
-                onPress={isLastSlide ? handleDone : handleNext}
-                style={[
-                  styles.mainButtonTouchable,
-                  isLastSlide && styles.getStartedButtonFullWidth
-                ]}
-            
-                onPressIn={() => onPressIn('main')}
-                onPressOut={() => onPressOut('main')}
+              onPress={isLastSlide ? handleDone : handleNext}
+              style={[
+                styles.mainButtonTouchable,
+                isLastSlide && styles.getStartedButtonFullWidth
+              ]}
+              onPressIn={() => onPressIn('main')}
+              onPressOut={() => onPressOut('main')}
             >
-                <Animated.View style={[
-                    styles.mainButton,
-                    isLastSlide ? styles.getStartedButtonStyles : styles.nextButtonStyles,
-                    { transform: [{ scale: mainButtonScale }] }
-                ]}>
-                    <Text style={styles.mainButtonText}>
-                        {isLastSlide ? 'Get Started' : 'Next'}
-                    </Text>
-                </Animated.View>
+              <Animated.View style={[
+                styles.mainButton,
+                isLastSlide ? styles.getStartedButtonStyles : styles.nextButtonStyles,
+                { transform: [{ scale: mainButtonScale }] }
+              ]}>
+                <Text style={styles.mainButtonText}>
+                  {isLastSlide ? 'Get Started' : 'Next'}
+                </Text>
+              </Animated.View>
             </TouchableOpacity>
+          </View>
         </View>
       </View>
     </SafeAreaView>
@@ -169,6 +185,12 @@ export default function OnboardingScreen() {
 }
 
 const styles = StyleSheet.create({
+  footerDivider: {
+    height: 1,
+    backgroundColor: COLORS.lightBorder,
+    width: '100%',
+    marginBottom: 8,
+  },
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -219,13 +241,14 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    flexDirection: 'row',
+    flexDirection: 'column', // vertical stacking: divider (top), buttons (bottom)
     alignItems: 'center',
-    justifyContent: 'space-between', // Default for skip and next
+    justifyContent: 'flex-end',
     paddingHorizontal: width * 0.07,
     paddingVertical: height * 0.02, // Vertical padding for footer
     minHeight: height * 0.1, // Ensure footer has enough height
     paddingBottom: Platform.OS === 'ios' ? height * 0.03 : height * 0.02, // Extra for iOS bottom bar
+    width: '100%',
   },
   pagination: { // Swiper's pagination style
     // Positioned by Swiper, but ensure it's above the buttons
