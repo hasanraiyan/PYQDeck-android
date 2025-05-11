@@ -14,6 +14,7 @@ import Swiper from 'react-native-swiper';
 import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../context/AppContext';
 import { Easing } from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 
 const { width, height } = Dimensions.get('window');
@@ -37,24 +38,34 @@ const COLORS = {
 
 export default function OnboardingScreen() {
   // Slides array NEEDS to be before any usage in effects!
+  // Use Vector Icons for slide icons
   const slides = [
     {
       key: '1',
-      title: 'Browse PYQ Questions', // Or "Discover BEU PYQs Easily"
-      description: 'Access thousands of previous year questions from various universities and exams.',
+      title: 'Browse PYQ Questions',
+      description:
+        'Easily search and access thousands of previous year questions from top universities and exams.',
       image: require('../assets/onboarding1.png'),
+      icon: (props) => <Ionicons name="search" {...props} />,
+      actionHint: 'Swipe categories to explore question banks',
     },
     {
       key: '2',
       title: 'Track Your Progress',
-      description: 'Mark questions as completed and track your learning progress over time.',
+      description:
+        'Mark questions as completed and visualize your learning progress with personalized statistics.',
       image: require('../assets/onboarding2.png'),
+      icon: (props) => <Ionicons name="stats-chart" {...props} />,
+      actionHint: 'Tap completed questions to track progress',
     },
     {
       key: '3',
-      title: 'Personalized Learning', // Or "Smart Recommendations For You"
-      description: 'Get tailored question recommendations based on your learning patterns.',
+      title: 'Personalized Learning',
+      description:
+        'Get smart recommendations based on your performance and study patterns to maximize your results.',
       image: require('../assets/onboarding3.png'),
+      icon: (props) => <MaterialCommunityIcons name="target" {...props} />,
+      actionHint: 'Review your stats for personalized suggestions',
     },
   ];
 
@@ -144,19 +155,21 @@ export default function OnboardingScreen() {
         >
           {slides.map((slide) => (
             <View key={slide.key} style={styles.slideContent}>
-              {/* Brand Header Block: Logo + Name */}
-              <View style={styles.brandBlock}>
-                <Image source={require('../../assets/app-logo.png')} style={styles.appLogo} accessibilityLabel="App Logo" />
-                <Text style={styles.appName}>PYQDeck</Text>
+              {/* Large Vector Icon above Image */}
+              <View style={styles.iconContainer}>
+                <View style={styles.iconBg}>
+                  {slide.icon({ size: 40, color: COLORS.primaryDark })}
+                </View>
               </View>
               {/* Image/Illustration */}
-              <View style={styles.imageContainer}>
-                <Image source={slide.image} style={styles.image} />
+              <View style={styles.imageContainerLarge}>
+                <Image source={slide.image} style={styles.imageLarge} />
               </View>
-              {/* Headline and Description */}
+              {/* Headline, Description, and Action Hint */}
               <View style={styles.textContainer}>
                 <Text style={styles.title}>{slide.title}</Text>
                 <Text style={styles.description}>{slide.description}</Text>
+                <Text style={styles.actionHint}>{slide.actionHint}</Text>
               </View>
             </View>
           ))}
@@ -276,14 +289,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: width * 0.08,
     paddingTop: 0,
   },
-  imageContainer: {
-    width: width * 0.8,
-    height: width * 0.8 * 0.85,
+  iconContainer: {
+    marginTop: 5,
+    marginBottom: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconBg: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#ede9fe', // Soft light version of purple, tweak if needed
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: COLORS.shadowColor,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
+    marginBottom: 0,
+  },
+  imageContainerLarge: {
+    width: width * 0.92,
+    height: width * 0.92 * 1.05,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20, // Reduced, as main text spacing handled elsewhere
+    marginBottom: 10,
   },
-  image: {
+  imageLarge: {
     width: '100%',
     height: '100%',
     resizeMode: 'contain',
@@ -353,11 +386,18 @@ const styles = StyleSheet.create({
   skipButtonTouchable: {
      padding: 10, // Hit area for skip
   },
-  skipButtonText: {
+  textContainer: {
+    alignItems: 'center',
+    paddingHorizontal: width * 0.05,
+    marginTop: 8,
+    marginBottom: 0,
+  },
+  actionHint: {
+    fontSize: 14,
     color: COLORS.textSecondary,
-    fontSize: 16,
-    fontWeight: '500',
-    // fontFamily: 'YourApp-Medium',
+    fontStyle: 'italic',
+    marginTop: 10,
+    textAlign: 'center',
   },
   mainButtonTouchable: { // Touchable wrapper for the main button
     // Flex behavior managed by footer's justifyContent
@@ -392,28 +432,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     // fontFamily: 'YourApp-SemiBold',
-  },
-  brandBlock: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24, // Spacing below brand for block harmony
-  },
-  appLogo: {
-    width: 92,
-    height: 92,
-    resizeMode: 'contain',
-    alignSelf: 'center',
-    marginTop: 0,
-    marginBottom: 4,
-  },
-  appName: {
-    marginTop: 4,
-    marginBottom: 0,
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.primary,
-    textAlign: 'center',
-    letterSpacing: 0.7,
   },
   paginationRow: {
     flexDirection: 'row',
