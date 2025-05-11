@@ -12,7 +12,11 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
+
+  // SPLIT LOADING
+  const [initialAuthLoading, setInitialAuthLoading] = useState(true);   // Used only for initial check
+  const [operationLoading, setOperationLoading] = useState(false);      // Used for login/register/etc.
+
   const [error, setError] = useState(null);
 
   // Set up axios instance with auth header
@@ -62,42 +66,24 @@ export const AuthProvider = ({ children }) => {
     }
   );
 
-  // Load token from storage on initial render
+  // Initial token/auth check - runs only once
   useEffect(() => {
     const loadToken = async () => {
+      setInitialAuthLoading(true);
       try {
         const storedToken = await AsyncStorage.getItem('auth_token');
         if (storedToken) {
           setToken(storedToken);
-          // Fetch user profile with the token
           await getUserProfile(storedToken);
         }
       } catch (error) {
         console.error('Failed to load auth token', error);
       } finally {
-        setLoading(false);
+        setInitialAuthLoading(false);
       }
     };
-
     loadToken();
-
-    // Add event listener for token changes
-    const tokenListener = async () => {
-      const newToken = await AsyncStorage.getItem('auth_token');
-      if (newToken !== token) {
-        setToken(newToken);
-        if (newToken) {
-          await getUserProfile(newToken);
-        } else {
-          setCurrentUser(null);
-        }
-      }
-    };
-
-    // Set up interval to check for token changes
-    const intervalId = setInterval(tokenListener, 5000);
-    return () => clearInterval(intervalId);
-  }, [token]);
+  }, []);
 
   // Get user profile with token
   const getUserProfile = async (authToken) => {
@@ -123,7 +109,7 @@ export const AuthProvider = ({ children }) => {
 
   // Register a new user
   const register = async (name, email, password) => {
-    setLoading(true);
+    setOperationLoading(true);
     setError(null);
     try {
       const response = await axios.post(`${API_URL}/auth/register`, {
@@ -148,13 +134,13 @@ export const AuthProvider = ({ children }) => {
       );
       return false;
     } finally {
-      setLoading(false);
+      setOperationLoading(false);
     }
   };
 
   // Login user
   const login = async (email, password) => {
-    setLoading(true);
+    setOperationLoading(true);
     setError(null);
     try {
       const response = await axios.post(`${API_URL}/auth/login`, {
@@ -177,13 +163,13 @@ export const AuthProvider = ({ children }) => {
       );
       return false;
     } finally {
-      setLoading(false);
+      setOperationLoading(false);
     }
   };
 
   // Logout user
   const logout = async () => {
-    setLoading(true);
+    setOperationLoading(true);
     try {
       // Wipe ALL data from AsyncStorage on logout for full data erase
       await AsyncStorage.clear();
@@ -192,7 +178,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error', error);
     } finally {
-      setLoading(false);
+      setOperationLoading(false);
     }
   };
 
@@ -355,7 +341,8 @@ export const AuthProvider = ({ children }) => {
   const value = {
     currentUser,
     token,
-    loading,
+    initialAuthLoading,
+    operationLoading,
     error,
     register,
     login,

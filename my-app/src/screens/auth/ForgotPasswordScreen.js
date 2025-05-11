@@ -10,12 +10,29 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Dimensions,
+  Image,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 
+const { width, height } = Dimensions.get('window');
+
+const COLORS = {
+  primary: '#7C6BEE',
+  primaryDark: '#5F4BE2',
+  white: '#FFFFFF',
+  background: '#FFFFFF',
+  textTitle: '#1D2737',
+  textBody: '#4A5568',
+  textSecondary: '#6B7280',
+  inactiveDot: '#D1D5DB',
+  lightBorder: '#E5E7EB',
+  shadowColor: '#A0AEC0',
+};
+
 const ForgotPasswordScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
-  const { forgotPassword, loading, error } = useAuth();
+  const { forgotPassword, operationLoading, error } = useAuth();
 
   const handleForgotPassword = async () => {
     if (!email) {
@@ -47,12 +64,22 @@ const ForgotPasswordScreen = ({ navigation }) => {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.formContainer}>
-          <Text style={styles.title}>Forgot Password</Text>
+          <View style={{ alignItems: 'center', marginBottom: 16 }}>
+            <Image
+              source={require('../../assets/onboarding1.png')}
+              style={{
+                width: width * 0.48,
+                height: width * 0.36,
+                resizeMode: 'contain',
+                marginTop: 10,
+                marginBottom: 0,
+              }}
+            />
+          </View>
+          <Text style={styles.title}>Forgot <Text style={{ color: COLORS.primaryDark }}>Password</Text></Text>
           <Text style={styles.subtitle}>
-            Enter your email address and we'll send you instructions to reset your
-            password
+            Enter your email address and we'll send you instructions to reset your password.
           </Text>
-
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
@@ -62,21 +89,24 @@ const ForgotPasswordScreen = ({ navigation }) => {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
+              placeholderTextColor={COLORS.textSecondary}
             />
           </View>
-
           <TouchableOpacity
-            style={styles.submitButton}
+            style={[
+              styles.submitButton,
+              operationLoading && { opacity: 0.55 }
+            ]}
             onPress={handleForgotPassword}
-            disabled={loading}
+            disabled={operationLoading}
+            activeOpacity={0.85}
           >
-            {loading ? (
+            {operationLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.submitButtonText}>Send Reset Link</Text>
             )}
           </TouchableOpacity>
-
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
@@ -92,64 +122,83 @@ const ForgotPasswordScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.background,
   },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
   },
   formContainer: {
-    padding: 20,
+    paddingHorizontal: width * 0.08,
+    paddingVertical: height * 0.05,
     width: '100%',
-    maxWidth: 400,
+    maxWidth: 420,
     alignSelf: 'center',
+    backgroundColor: COLORS.background,
   },
   title: {
-    fontSize: 32,
+    fontSize: Platform.OS === 'ios' ? 28 : 26,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
+    color: COLORS.textTitle,
+    marginBottom: 10,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 32,
+    fontSize: Platform.OS === 'ios' ? 16 : 15,
+    color: COLORS.textBody,
+    marginBottom: 24,
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: Platform.OS === 'ios' ? 24 : 22,
   },
   inputContainer: {
-    marginBottom: 24,
+    marginBottom: 18,
   },
   input: {
-    backgroundColor: '#f5f5f5',
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: COLORS.white,
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: COLORS.lightBorder,
+    color: COLORS.textTitle,
+    shadowColor: COLORS.shadowColor,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 1.5,
+    elevation: 1,
   },
   submitButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 15,
+    borderRadius: 28,
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'center',
+    marginBottom: 18,
+    minWidth: width * 0.27,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 7,
+    elevation: 4,
   },
   submitButtonText: {
-    color: '#fff',
+    color: COLORS.white,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    textAlign: 'center',
   },
   backButton: {
-    padding: 15,
-    borderRadius: 10,
+    paddingVertical: 12,
+    borderRadius: 28,
     alignItems: 'center',
+    marginTop: 6,
   },
   backButtonText: {
-    color: '#007AFF',
-    fontSize: 16,
+    color: COLORS.primaryDark,
+    fontSize: 15,
+    fontWeight: 'bold',
   },
 });
 
-export default ForgotPasswordScreen; 
+export default ForgotPasswordScreen;

@@ -4,10 +4,28 @@ import { useAuth } from './AuthContext';
 // Create the app context
 const AppContext = createContext();
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 // Provider component that makes app data available to any child component that calls useApp()
 export const AppProvider = ({ children }) => {
   const { authAxios } = useAuth();
-  
+
+  // Onboarding state — in context + persistent
+  const [onboardingCompleted, setOnboardingCompletedState] = useState(false);
+
+  React.useEffect(() => {
+    const loadOnboarding = async () => {
+      const stored = await AsyncStorage.getItem('onboardingCompleted');
+      setOnboardingCompletedState(stored === 'true');
+    };
+    loadOnboarding();
+  }, []);
+
+  const setOnboardingCompleted = async (value) => {
+    setOnboardingCompletedState(!!value);
+    await AsyncStorage.setItem('onboardingCompleted', value ? 'true' : 'false');
+  };
+
   // State for branches, semesters, subjects, and questions
   const [branches, setBranches] = useState([]);
   const [semesters, setSemesters] = useState([]);
@@ -16,7 +34,7 @@ export const AppProvider = ({ children }) => {
   const [currentBranch, setCurrentBranch] = useState(null);
   const [currentSemester, setCurrentSemester] = useState(null);
   const [currentSubject, setCurrentSubject] = useState(null);
-  
+
   // Loading and error states
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -250,6 +268,10 @@ export const AppProvider = ({ children }) => {
 
   // Value object that will be provided to consumers of this context
   const value = {
+    // App-related
+    onboardingCompleted,
+    setOnboardingCompleted,
+
     // Data
     branches,
     semesters,
@@ -260,7 +282,7 @@ export const AppProvider = ({ children }) => {
     currentSubject,
     loading,
     error,
-    
+
     // Methods
     fetchBranches,
     fetchSemesters,

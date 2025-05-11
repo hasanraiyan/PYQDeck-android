@@ -38,7 +38,7 @@ const LoginScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
-  const { login, loading, error } = useAuth();
+  const { login, operationLoading, error } = useAuth();
 
   
   const handleLogin = async () => {
@@ -145,13 +145,13 @@ const LoginScreen = ({ navigation }) => {
           <TouchableOpacity
             style={[
               styles.loginButton,
-              (loading || !email || !password) && { opacity: 0.5 }
+              (operationLoading || !email || !password) && { opacity: 0.5 }
             ]}
             onPress={handleLogin}
-            disabled={loading || !email || !password}
+            disabled={operationLoading || !email || !password}
             activeOpacity={0.85}
           >
-            {loading ? (
+            {operationLoading ? (
               <ActivityIndicator color={COLORS.white} />
             ) : (
               <Text style={styles.loginButtonText}>Login</Text>

@@ -44,7 +44,7 @@ const RegisterScreen = ({ navigation }) => {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [confirmFocused, setConfirmFocused] = useState(false);
-  const { register, loading, error } = useAuth();
+  const { register, operationLoading, error } = useAuth();
   // Animation values
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const spinnerAnim = useRef(new Animated.Value(1)).current;
@@ -247,7 +247,7 @@ const RegisterScreen = ({ navigation }) => {
             style={[
               styles.registerButton,
               {
-                opacity: (loading || !name || !email || !password || !confirmPassword) ? 0.5 : 1,
+                opacity: (operationLoading || !name || !email || !password || !confirmPassword) ? 0.5 : 1,
                 transform: [{ scale: scaleAnim }],
               },
             ]}
@@ -255,10 +255,10 @@ const RegisterScreen = ({ navigation }) => {
             <TouchableOpacity
               style={{ width: '100%', alignItems: 'center', justifyContent: 'center' }}
               onPress={handleRegister}
-              disabled={loading || !name || !email || !password || !confirmPassword}
+              disabled={operationLoading || !name || !email || !password || !confirmPassword}
               activeOpacity={0.85}
             >
-              {loading ? (
+              {operationLoading ? (
                 <Animated.View style={{ transform: [{ scale: spinnerAnim }] }}>
                   <ActivityIndicator color="#fff" />
                 </Animated.View>

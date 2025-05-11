@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import Swiper from 'react-native-swiper';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useApp } from '../context/AppContext';
 
 
 const { width, height } = Dimensions.get('window');
@@ -42,6 +42,7 @@ const getPollinationsImageUrl = (prompt) => {
 
 export default function OnboardingScreen() {
   const navigation = useNavigation();
+  const { setOnboardingCompleted } = useApp();
   const [activeSlide, setActiveSlide] = useState(0);
   const swiperRef = useRef(null);
 
@@ -70,8 +71,8 @@ export default function OnboardingScreen() {
   ];
 
   const handleDone = async () => {
-    await AsyncStorage.setItem('onboardingCompleted', 'true');
-    navigation.navigate('AuthStack');
+    await setOnboardingCompleted(true);
+    // No navigation here — AppNavigator will rerender according to onboarding status.
   };
 
   const handleNext = () => {
