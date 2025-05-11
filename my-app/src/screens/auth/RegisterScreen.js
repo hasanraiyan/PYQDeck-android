@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,8 @@ import {
   ScrollView,
   Alert,
   Dimensions,
-  Image
+  Image,
+  Animated
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
@@ -44,6 +45,44 @@ const RegisterScreen = ({ navigation }) => {
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [confirmFocused, setConfirmFocused] = useState(false);
   const { register, loading, error } = useAuth();
+  // Animation values
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const spinnerAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (loading) {
+      // Shrink button and pulse spinner
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 0.95,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(spinnerAnim, {
+              toValue: 1.15,
+              duration: 380,
+              useNativeDriver: true,
+            }),
+            Animated.timing(spinnerAnim, {
+              toValue: 1,
+              duration: 380,
+              useNativeDriver: true,
+            }),
+          ])
+        ),
+      ]).start();
+    } else {
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 160,
+        useNativeDriver: true,
+      }).start();
+      spinnerAnim.setValue(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   const handleRegister = async () => {
     if (!name || !email || !password || !confirmPassword) {
@@ -204,21 +243,30 @@ const RegisterScreen = ({ navigation }) => {
             </View>
           </View>
 
-          <TouchableOpacity
+          <Animated.View
             style={[
               styles.registerButton,
-              (loading || !name || !email || !password || !confirmPassword) && { opacity: 0.5 }
+              {
+                opacity: (loading || !name || !email || !password || !confirmPassword) ? 0.5 : 1,
+                transform: [{ scale: scaleAnim }],
+              },
             ]}
-            onPress={handleRegister}
-            disabled={loading || !name || !email || !password || !confirmPassword}
-            activeOpacity={0.85}
           >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.registerButtonText}>Register</Text>
-            )}
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={{ width: '100%', alignItems: 'center', justifyContent: 'center' }}
+              onPress={handleRegister}
+              disabled={loading || !name || !email || !password || !confirmPassword}
+              activeOpacity={0.85}
+            >
+              {loading ? (
+                <Animated.View style={{ transform: [{ scale: spinnerAnim }] }}>
+                  <ActivityIndicator color="#fff" />
+                </Animated.View>
+              ) : (
+                <Text style={styles.registerButtonText}>Register</Text>
+              )}
+            </TouchableOpacity>
+          </Animated.View>
 
           <View style={styles.loginContainer}>
             <Text style={styles.loginText}>Already have an account? </Text>

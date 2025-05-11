@@ -11,7 +11,7 @@ import {
   ScrollView,
   Alert,
   Dimensions,
-  Image
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
@@ -40,6 +40,7 @@ const LoginScreen = ({ navigation }) => {
   const [passwordFocused, setPasswordFocused] = useState(false);
   const { login, loading, error } = useAuth();
 
+  
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Please fill in all fields');

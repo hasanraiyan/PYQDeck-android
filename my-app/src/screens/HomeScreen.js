@@ -1,10 +1,22 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useAuth } from '../context/AuthContext';
 
 export default function HomeScreen() {
+  const { logout } = useAuth();
+
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Welcome to PYQ Deck!</Text>
+      <TouchableOpacity
+        style={styles.logoutButton}
+        onPress={logout}
+        accessibilityRole="button"
+        accessibilityLabel="Logout"
+        activeOpacity={0.85}
+      >
+        <Text style={styles.logoutButtonText}>Logout</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -52,5 +64,24 @@ const styles = StyleSheet.create({
     color: '#636e72',
     lineHeight: 24,
     textAlign: 'center',
+  },
+  logoutButton: {
+    marginTop: 36,
+    backgroundColor: '#e17055',
+    paddingVertical: 13,
+    paddingHorizontal: 45,
+    borderRadius: 30,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#e17055',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+  },
+  logoutButtonText: {
+    color: 'white',
+    fontSize: 17,
+    fontWeight: '600',
+    letterSpacing: 0.7,
   },
 });
