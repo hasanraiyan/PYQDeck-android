@@ -71,7 +71,7 @@ export default function OnboardingScreen() {
 
   const handleDone = async () => {
     await AsyncStorage.setItem('onboardingCompleted', 'true');
-    navigation.navigate('Home');
+    navigation.navigate('AuthStack');
   };
 
   const handleNext = () => {

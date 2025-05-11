@@ -10,8 +10,10 @@ import {
   Platform,
   ScrollView,
   Alert,
-  Dimensions
+  Dimensions,
+  Image
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 
 const { width, height } = Dimensions.get('window');
@@ -33,6 +35,9 @@ const COLORS = {
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
   const { login, loading, error } = useAuth();
 
   const handleLogin = async () => {
@@ -54,12 +59,30 @@ const LoginScreen = ({ navigation }) => {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         <View style={styles.formContainer}>
-          <Text style={styles.title}>Welcome Back!</Text>
+          {/* Big Onboarding Illustration */}
+          <View style={{ alignItems: 'center', marginBottom: 18 }}>
+            <Image
+              source={require('../../assets/onboarding1.png')}
+              style={{
+                width: width * 0.55,
+                height: width * 0.45,
+                resizeMode: 'contain',
+                marginTop: 10,
+                marginBottom: 2,
+              }}
+            />
+          </View>
+          <Text style={styles.title}>
+            Welcome <Text style={{ color: COLORS.primaryDark }}>Back!</Text>
+          </Text>
           <Text style={styles.subtitle}>Sign in to continue</Text>
 
           <View style={styles.inputContainer}>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                emailFocused && { borderColor: COLORS.primaryDark, borderWidth: 2 }
+              ]}
               placeholder="Email"
               value={email}
               onChangeText={setEmail}
@@ -67,19 +90,48 @@ const LoginScreen = ({ navigation }) => {
               autoCapitalize="none"
               autoCorrect={false}
               placeholderTextColor={COLORS.textSecondary}
+              onFocus={() => setEmailFocused(true)}
+              onBlur={() => setEmailFocused(false)}
             />
           </View>
 
           <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              placeholderTextColor={COLORS.textSecondary}
-            />
+            <View style={{ position: 'relative', justifyContent: 'center' }}>
+              <TextInput
+                style={[
+                  styles.input,
+                  passwordFocused && { borderColor: COLORS.primaryDark, borderWidth: 2 }
+                ]}
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                placeholderTextColor={COLORS.textSecondary}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
+              />
+              <TouchableOpacity
+                style={{
+                  position: 'absolute',
+                  right: 14,
+                  top: 0,
+                  height: '100%',
+                  justifyContent: 'center',
+                  paddingLeft: 16,
+                  paddingRight: 4,
+                }}
+                onPress={() => setShowPassword((v) => !v)}
+                accessibilityRole="button"
+                accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={22}
+                  color={COLORS.textSecondary}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <TouchableOpacity
@@ -90,9 +142,12 @@ const LoginScreen = ({ navigation }) => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.loginButton}
+            style={[
+              styles.loginButton,
+              (loading || !email || !password) && { opacity: 0.5 }
+            ]}
             onPress={handleLogin}
-            disabled={loading}
+            disabled={loading || !email || !password}
             activeOpacity={0.85}
           >
             {loading ? (
@@ -130,13 +185,6 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     alignSelf: 'center',
     backgroundColor: COLORS.background,
-    borderRadius: 18,
-    // Optional shadow for card effect (can remove if too heavy)
-    shadowColor: COLORS.shadowColor,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.07,
-    shadowRadius: 8,
-    elevation: 3,
   },
   title: {
     fontSize: Platform.OS === 'ios' ? 28 : 26,
@@ -164,7 +212,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.lightBorder,
     color: COLORS.textTitle,
-    // Optional slight box shadow for iOS
     shadowColor: COLORS.shadowColor,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
@@ -188,7 +235,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 25,
     minWidth: width * 0.27,
-    // Shadow for elevated button look
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.18,
