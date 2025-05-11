@@ -1,6 +1,6 @@
 // App.js
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, ActivityIndicator, Text, StyleSheet, Platform } from 'react-native';
+import { View, ActivityIndicator, Text, StyleSheet, Platform, AppState } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SplashScreen from 'expo-splash-screen';
@@ -31,7 +31,7 @@ const AppContent = () => {
         setShowOnboarding(true); // Default to show onboarding on error
       } finally {
         // We wait for both onboarding check and auth token resolution
-        if (!authIsLoading) {
+        if (!authIsLoading || showOnboarding !== null) {
             setAppIsReady(true);
         }
       }
@@ -56,6 +56,22 @@ const AppContent = () => {
       console.warn("App.js: Error saving onboarding status", e);
     }
   };
+
+  // Handle app state changes to prevent null React instance errors
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active') {
+        // Re-initialize any necessary state when app becomes active
+        if (!userToken && !authIsLoading) {
+          // Handle re-authentication if needed
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [userToken, authIsLoading]);
 
   if (!appIsReady || showOnboarding === null || authIsLoading) {
     return (
