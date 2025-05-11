@@ -45,7 +45,7 @@ export default function OnboardingScreen() {
       title: 'Browse PYQ Questions',
       description:
         'Easily search and access thousands of previous year questions from top universities and exams.',
-      image: require('../assets/onboarding1.png'),
+      image: require('../../assets/onboarding1.png'),
       icon: (props) => <Ionicons name="search" {...props} />,
       actionHint: 'Swipe categories to explore question banks',
     },
@@ -54,7 +54,7 @@ export default function OnboardingScreen() {
       title: 'Track Your Progress',
       description:
         'Mark questions as completed and visualize your learning progress with personalized statistics.',
-      image: require('../assets/onboarding2.png'),
+      image: require('../../assets/onboarding2.png'),
       icon: (props) => <Ionicons name="stats-chart" {...props} />,
       actionHint: 'Tap completed questions to track progress',
     },
@@ -63,7 +63,7 @@ export default function OnboardingScreen() {
       title: 'Personalized Learning',
       description:
         'Get smart recommendations based on your performance and study patterns to maximize your results.',
-      image: require('../assets/onboarding3.png'),
+      image: require('../../assets/onboarding3.png'),
       icon: (props) => <MaterialCommunityIcons name="target" {...props} />,
       actionHint: 'Review your stats for personalized suggestions',
     },
