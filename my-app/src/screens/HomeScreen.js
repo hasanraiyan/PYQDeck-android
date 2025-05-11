@@ -12,12 +12,45 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
+    paddingTop: 40,
   },
-  text: {
+  header: {
+    width: '100%',
+    padding: 20,
+    backgroundColor: '#0984e3',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  headerText: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    color: 'white',
+    letterSpacing: 1,
+  },
+  content: {
+    width: '90%',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+  },
+  welcomeText: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#2d3436',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  description: {
+    fontSize: 16,
+    color: '#636e72',
+    lineHeight: 24,
+    textAlign: 'center',
   },
 });

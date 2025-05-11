@@ -33,6 +33,35 @@ export const AuthProvider = ({ children }) => {
     }
   );
 
+  // Handle token expiration
+  authAxios.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      const originalRequest = error.config;
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        originalRequest._retry = true;
+        try {
+          // Attempt to refresh token
+          const response = await axios.post(`${API_URL}/auth/refresh`, {
+            token
+          });
+          
+          if (response.data.success) {
+            const newToken = response.data.token;
+            await AsyncStorage.setItem('auth_token', newToken);
+            setToken(newToken);
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            return authAxios(originalRequest);
+          }
+        } catch (refreshError) {
+          // If refresh fails, logout user
+          await logout();
+        }
+      }
+      return Promise.reject(error);
+    }
+  );
+
   // Load token from storage on initial render
   useEffect(() => {
     const loadToken = async () => {
@@ -51,7 +80,24 @@ export const AuthProvider = ({ children }) => {
     };
 
     loadToken();
-  }, []);
+
+    // Add event listener for token changes
+    const tokenListener = async () => {
+      const newToken = await AsyncStorage.getItem('auth_token');
+      if (newToken !== token) {
+        setToken(newToken);
+        if (newToken) {
+          await getUserProfile(newToken);
+        } else {
+          setCurrentUser(null);
+        }
+      }
+    };
+
+    // Set up interval to check for token changes
+    const intervalId = setInterval(tokenListener, 5000);
+    return () => clearInterval(intervalId);
+  }, [token]);
 
   // Get user profile with token
   const getUserProfile = async (authToken) => {
@@ -139,13 +185,34 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     setLoading(true);
     try {
-      await AsyncStorage.removeItem('auth_token');
+      await AsyncStorage.multiRemove(['auth_token', 'user_data']);
       setToken(null);
       setCurrentUser(null);
     } catch (error) {
       console.error('Logout error', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Persist user data to storage
+  const persistUserData = async (userData) => {
+    try {
+      await AsyncStorage.setItem('user_data', JSON.stringify(userData));
+    } catch (error) {
+      console.error('Failed to persist user data', error);
+    }
+  };
+
+  // Load persisted user data from storage
+  const loadPersistedUserData = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('user_data');
+      if (userData) {
+        setCurrentUser(JSON.parse(userData));
+      }
+    } catch (error) {
+      console.error('Failed to load persisted user data', error);
     }
   };
 

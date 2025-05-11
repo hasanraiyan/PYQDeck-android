@@ -1,144 +1,334 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+  Animated,
+  Platform,
+  SafeAreaView,
+} from 'react-native';
 import Swiper from 'react-native-swiper';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const { width, height } = Dimensions.get('window');
+
+// --- Updated Color Palette Based on Analysis ---
+const COLORS = {
+  primary: '#7C6BEE', // Adjusted primary purple (matches example better)
+  primaryDark: '#5F4BE2', // Slightly darker for press states or emphasis
+
+  white: '#FFFFFF',
+  background: '#FFFFFF', // Clean white background
+
+  textTitle: '#1D2737', // Dark, strong title color (from example)
+  textBody: '#4A5568', // Softer gray for descriptions
+  textSecondary: '#6B7280', // For skip text, less important info
+
+  inactiveDot: '#D1D5DB', // Light gray for inactive dots (from example)
+  lightBorder: '#E5E7EB', // For subtle borders if needed
+  shadowColor: '#A0AEC0', // For soft shadows (though examples are quite flat)
+};
+
+const getPollinationsImageUrl = (prompt) => {
+  // Add style keywords from the example images to the prompt
+  const stylePrompt = "white background, modern flat illustration, character design, educational tech, clean lines, vibrant purple and blue color palette, minimal background, centered composition";
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + ", " + stylePrompt)}`;
+};
 
 export default function OnboardingScreen() {
   const navigation = useNavigation();
   const [activeSlide, setActiveSlide] = useState(0);
+  const swiperRef = useRef(null);
+
+  const mainButtonScale = useRef(new Animated.Value(1)).current;
+  const skipButtonScale = useRef(new Animated.Value(1)).current;
 
   const slides = [
     {
-      title: 'Browse PYQ Questions',
+      key: '1',
+      title: 'Browse PYQ Questions', // Or "Discover BEU PYQs Easily"
       description: 'Access thousands of previous year questions from various universities and exams.',
-      image: { uri: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80' },
+      image: { uri: getPollinationsImageUrl('Student character browsing a digital library of academic questions on a large screen or mobile device.') },
     },
     {
+      key: '2',
       title: 'Track Your Progress',
       description: 'Mark questions as completed and track your learning progress over time.',
-      image: { uri: 'https://images.pexels.com/photos/5905481/pexels-photo-5905481.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2' },
+      image: { uri: getPollinationsImageUrl('Student character looking at a progress chart or checklist for study achievements.') },
     },
     {
-      title: 'Personalized Recommendations',
+      key: '3',
+      title: 'Personalized Learning', // Or "Smart Recommendations For You"
       description: 'Get tailored question recommendations based on your learning patterns.',
-      image: { uri: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1471&q=80' },
+      image: { uri: getPollinationsImageUrl('AI assistant or algorithm providing personalized study suggestions to a student.') },
     },
   ];
 
-  const handleDone = () => {
-    navigation.replace('Home');
+  const handleDone = async () => {
+    await AsyncStorage.setItem('onboardingCompleted', 'true');
+    navigation.navigate('Home');
   };
 
-  return (
-    <View style={styles.container}>
-      <Swiper
-        loop={false}
-        onIndexChanged={(index) => setActiveSlide(index)}
-        dotStyle={styles.dot}
-        activeDotStyle={styles.activeDot}
-      >
-        {slides.map((slide, index) => (
-          <View key={index} style={styles.slide}>
-            <Image source={slide.image} style={styles.image} />
-            <Text style={styles.title}>{slide.title}</Text>
-            <Text style={styles.description}>{slide.description}</Text>
-          </View>
-        ))}
-      </Swiper>
+  const handleNext = () => {
+    if (swiperRef.current && activeSlide < slides.length - 1) {
+      swiperRef.current.scrollBy(1);
+    }
+  };
 
-      <View style={styles.footer}>
-        {activeSlide === slides.length - 1 ? (
-          <TouchableOpacity style={styles.doneButton} onPress={handleDone}>
-            <Text style={styles.buttonText}>Get Started</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.skipButton}
-            onPress={handleDone}
-          >
-            <Text style={styles.skipText}>Skip</Text>
-          </TouchableOpacity>
-        )}
+  const onPressIn = (buttonType = 'main') => {
+    const scaleAnim = buttonType === 'skip' ? skipButtonScale : mainButtonScale;
+    const toValue = 0.96; // Consistent press depth
+    Animated.spring(scaleAnim, { toValue, friction: 7, tension: 100, useNativeDriver: true }).start();
+  };
+  const onPressOut = (buttonType = 'main') => {
+    const scaleAnim = buttonType === 'skip' ? skipButtonScale : mainButtonScale;
+    Animated.spring(scaleAnim, { toValue: 1, friction: 5, tension: 80, useNativeDriver: true }).start();
+  };
+
+  const isLastSlide = activeSlide === slides.length - 1;
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Swiper
+          ref={swiperRef}
+          loop={false}
+          onIndexChanged={(index) => setActiveSlide(index)}
+          dotStyle={styles.dot}
+          activeDotStyle={styles.activeDot}
+          paginationStyle={styles.pagination}
+          showsButtons={false} // We use custom footer buttons
+        >
+          {slides.map((slide) => (
+            <View key={slide.key} style={styles.slideContent}>
+              {/* Image takes up a significant portion, then text below */}
+              <View style={styles.imageContainer}>
+                <Image source={slide.image} style={styles.image} />
+              </View>
+              <View style={styles.textContainer}>
+                <Text style={styles.title}>{slide.title}</Text>
+                <Text style={styles.description}>{slide.description}</Text>
+              </View>
+            </View>
+          ))}
+        </Swiper>
+
+        {/* Footer with pagination and buttons */}
+        <View style={styles.footer}>
+            {/* Horizontal divider above footer buttons */}
+            <View style={styles.footerDivider} />
+
+            {/* Skip Button - Only if not on the last slide */}
+            {!isLastSlide && (
+                <TouchableOpacity
+                    style={styles.skipButtonTouchable}
+                    onPressIn={() => onPressIn('skip')}
+                    onPressOut={() => onPressOut('skip')}
+                    onPress={handleDone}
+                >
+                    <Animated.View style={{ transform: [{ scale: skipButtonScale }] }}>
+                        <Text style={styles.skipButtonText}>Skip</Text>
+                    </Animated.View>
+                </TouchableOpacity>
+            )}
+
+            {/* Spacer to push Next/Get Started button to the right if Skip is present */}
+            {!isLastSlide && <View style={{flex:1}} /> }
+    
+
+            {/* Next / Get Started Button */}
+            <TouchableOpacity
+                onPress={isLastSlide ? handleDone : handleNext}
+                style={[
+                  styles.mainButtonTouchable,
+                  isLastSlide && styles.getStartedButtonFullWidth
+                ]}
+            
+                onPressIn={() => onPressIn('main')}
+                onPressOut={() => onPressOut('main')}
+            >
+                <Animated.View style={[
+                    styles.mainButton,
+                    isLastSlide ? styles.getStartedButtonStyles : styles.nextButtonStyles,
+                    { transform: [{ scale: mainButtonScale }] }
+                ]}>
+                    <Text style={styles.mainButtonText}>
+                        {isLastSlide ? 'Get Started' : 'Next'}
+                    </Text>
+                </Animated.View>
+            </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    paddingBottom: 20, // Space for footer elements
   },
-  slide: {
+  slideContent: { // Content within each Swiper slide
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center', // Center content vertically
+    paddingHorizontal: width * 0.08, // Generous horizontal padding
+  },
+  imageContainer: {
+    width: width * 0.8, // Image width
+    height: width * 0.8 * 0.85, // Aspect ratio for image (adjust as needed)
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
+    marginBottom: height * 0.05, // Space between image and text
   },
   image: {
-    width: width * 0.7,
-    height: height * 0.4,
+    width: '100%',
+    height: '100%',
     resizeMode: 'contain',
-    marginBottom: 30,
+  },
+  textContainer: {
+    alignItems: 'center',
+    paddingHorizontal: width * 0.05, // Padding for text block
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 15,
+    fontSize: Platform.OS === 'ios' ? 28 : 26, // Large, prominent title
+    fontWeight: 'bold', // Bold as per example
+    color: COLORS.textTitle,
     textAlign: 'center',
-    color: '#333',
+    marginBottom: 15,
+    // fontFamily: 'YourApp-Bold', // TODO: Add your custom font
   },
   description: {
-    fontSize: 16,
+    fontSize: Platform.OS === 'ios' ? 16 : 15,
+    color: COLORS.textBody,
     textAlign: 'center',
-    color: '#666',
-    lineHeight: 24,
-  },
-  dot: {
-    backgroundColor: 'rgba(0,0,0,.2)',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginLeft: 3,
-    marginRight: 3,
-    marginTop: 3,
-    marginBottom: 3,
-  },
-  activeDot: {
-    backgroundColor: '#007AFF',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginLeft: 3,
-    marginRight: 3,
-    marginTop: 3,
-    marginBottom: 3,
+    lineHeight: Platform.OS === 'ios' ? 24 : 22, // Good readability
+    // fontFamily: 'YourApp-Regular', // TODO: Add your custom font
   },
   footer: {
     position: 'absolute',
-    bottom: 40,
+    bottom: 0,
     left: 0,
     right: 0,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between', // Default for skip and next
+    paddingHorizontal: width * 0.07,
+    paddingVertical: height * 0.02, // Vertical padding for footer
+    minHeight: height * 0.1, // Ensure footer has enough height
+    paddingBottom: Platform.OS === 'ios' ? height * 0.03 : height * 0.02, // Extra for iOS bottom bar
   },
-  doneButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 15,
-    paddingHorizontal: 60,
-    borderRadius: 30,
+  pagination: { // Swiper's pagination style
+    // Positioned by Swiper, but ensure it's above the buttons
+    // The default positioning of swiper pagination is usually at the bottom of the swiper view.
+    // We can adjust its 'bottom' relative to the swiper view itself if needed,
+    // but here the footer elements are outside the swiper.
+    // So we'll manually place our custom dots OR rely on swiper's default
+    // For now, using swiper's default and styling its dots.
+    // This will be relative to the swiper container which is most of the screen.
+    // We might need to move the Swiper view up a bit if pagination clashes with footer.
+    // For precise control, we'd create our own pagination outside the swiper.
+    // Let's assume swiper's pagination is fine for now.
+    bottom: height * 0.15, // Push it up from the absolute bottom of the Swiper
   },
-  buttonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '600',
+  dot: {
+    backgroundColor: COLORS.inactiveDot,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
   },
-  skipButton: {
-    padding: 15,
+  activeDot: { // Elongated active dot like in the example
+    backgroundColor: COLORS.primary,
+    width: 20, // Wider
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
   },
-  skipText: {
-    color: '#007AFF',
+  skipButtonTouchable: {
+     padding: 10, // Hit area for skip
+  },
+  skipButtonText: {
+    color: COLORS.textSecondary,
     fontSize: 16,
+    fontWeight: '500',
+    // fontFamily: 'YourApp-Medium',
+  },
+  mainButtonTouchable: { // Touchable wrapper for the main button
+    // Flex behavior managed by footer's justifyContent
+  },
+  mainButton: { // Common styles for Next/Get Started button (Animated.View)
+    borderRadius: 28, // Well-rounded corners
+    paddingVertical: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: width * 0.35, // Good minimum width
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2, // Subtle shadow
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  nextButtonStyles: { // Specific to "Next"
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 35,
+  },
+  getStartedButtonStyles: { // Specific to "Get Started"
+    backgroundColor: COLORS.primary, // Same color as "Next" in this design
+    paddingHorizontal: 40,
+  },
+  getStartedButtonFullWidth: { // Style for the TouchableOpacity when it's the only button
+    flex: 1, // Take full width available in the footer
+    marginHorizontal: width * 0.1, // Add some margin if taking full width
+  },
+  mainButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '600',
+    // fontFamily: 'YourApp-SemiBold',
   },
 });
+
+
+// --- Step Tab Bar Styles ---
+const stepTabSize = 28;
+
+styles.stepTabBar = {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+};
+styles.stepTab = {
+    width: stepTabSize,
+    height: stepTabSize,
+    borderRadius: stepTabSize / 2,
+    backgroundColor: COLORS.inactiveDot,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 5,
+    borderWidth: 2,
+    borderColor: 'transparent',
+};
+styles.stepTabActive = {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primaryDark,
+};
+styles.stepTabText = {
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+    fontSize: 14,
+};
+styles.stepTabTextActive = {
+    color: COLORS.white,
+    fontWeight: '700',
+};
