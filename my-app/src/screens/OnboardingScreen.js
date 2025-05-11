@@ -13,6 +13,7 @@ import {
 import Swiper from 'react-native-swiper';
 import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../context/AppContext';
+import { Easing } from 'react-native';
 
 
 const { width, height } = Dimensions.get('window');
@@ -34,21 +35,8 @@ const COLORS = {
   shadowColor: '#A0AEC0', // For soft shadows (though examples are quite flat)
 };
 
-const getPollinationsImageUrl = (prompt) => {
-  // Add style keywords from the example images to the prompt
-  const stylePrompt = "white background, modern flat illustration, character design, educational tech, clean lines, vibrant purple and blue color palette, minimal background, centered composition";
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + ", " + stylePrompt)}`;
-};
-
 export default function OnboardingScreen() {
-  const navigation = useNavigation();
-  const { setOnboardingCompleted } = useApp();
-  const [activeSlide, setActiveSlide] = useState(0);
-  const swiperRef = useRef(null);
-
-  const mainButtonScale = useRef(new Animated.Value(1)).current;
-  const skipButtonScale = useRef(new Animated.Value(1)).current;
-
+  // Slides array NEEDS to be before any usage in effects!
   const slides = [
     {
       key: '1',
@@ -69,6 +57,26 @@ export default function OnboardingScreen() {
       image: require('../assets/onboarding3.png'),
     },
   ];
+
+  const navigation = useNavigation();
+  const { setOnboardingCompleted } = useApp();
+  const [activeSlide, setActiveSlide] = useState(0);
+  const swiperRef = useRef(null);
+
+  // Animated values for button morph transitions
+  const mainButtonScale = useRef(new Animated.Value(1)).current;
+  const skipButtonScale = useRef(new Animated.Value(1)).current;
+  const nextToGetStarted = useRef(new Animated.Value(0)).current; // 0=show Next, 1=show Get Started
+
+  React.useEffect(() => {
+    // Animate button morph on slide transitions
+    Animated.timing(nextToGetStarted, {
+      toValue: activeSlide === slides.length - 1 ? 1 : 0,
+      duration: 250,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: false, // Must be false for width animation (JS-driven)
+    }).start();
+  }, [activeSlide, slides.length]);
 
   const handleDone = async () => {
     await setOnboardingCompleted(true);
@@ -92,6 +100,28 @@ export default function OnboardingScreen() {
   };
 
   const isLastSlide = activeSlide === slides.length - 1;
+
+  // Animate label morph (Next → OK/Get Started)
+  const mainLabelOpacity = nextToGetStarted.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0],
+  });
+  const getStartedLabelOpacity = nextToGetStarted.interpolate({
+    inputRange: [0, 0.8, 1],
+    outputRange: [0, 0.5, 1],
+  });
+  // Remove width animation. Use static width -- wide on last slide, compact otherwise.
+  const getButtonWidth = (isLastSlide) => (isLastSlide ? 260 : 160);
+
+  // Animate skip fade out
+  const skipOpacity = nextToGetStarted.interpolate({
+    inputRange: [0, 0.7, 1],
+    outputRange: [1, 0.4, 0],
+  });
+  const skipTranslateY = nextToGetStarted.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 24],
+  });
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -140,42 +170,73 @@ export default function OnboardingScreen() {
           <View style={styles.footerDivider} />
 
           {/* Horizontal row of buttons */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
-            {/* Skip Button - Only if not on the last slide */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              width: '100%',
+              justifyContent: isLastSlide ? 'center' : 'flex-start',
+            }}
+          >
+            {/* Skip button always rendered, fades out on last slide */}
             {!isLastSlide && (
-              <TouchableOpacity
-                style={styles.skipButtonTouchable}
-                onPressIn={() => onPressIn('skip')}
-                onPressOut={() => onPressOut('skip')}
-                onPress={handleDone}
+              <Animated.View
+                style={{
+                  opacity: skipOpacity,
+                  transform: [{ translateY: skipTranslateY }, { scale: skipButtonScale }],
+                  zIndex: 2,
+                }}
               >
-                <Animated.View style={{ transform: [{ scale: skipButtonScale }] }}>
+                <TouchableOpacity
+                  style={styles.skipButtonTouchable}
+                  onPressIn={() => onPressIn('skip')}
+                  onPressOut={() => onPressOut('skip')}
+                  onPress={handleDone}
+                >
                   <Text style={styles.skipButtonText}>Skip</Text>
-                </Animated.View>
-              </TouchableOpacity>
+                </TouchableOpacity>
+              </Animated.View>
             )}
 
-            {/* Spacer to push Next/Get Started button to the right if Skip is present */}
+            {/* Spacer to push Next button right when not last slide */}
             {!isLastSlide && <View style={{ flex: 1 }} />}
 
-            {/* Next / Get Started Button */}
+            {/* Animated morphing Next/Get Started/OK button, centered if last slide */}
             <TouchableOpacity
               onPress={isLastSlide ? handleDone : handleNext}
               style={[
                 styles.mainButtonTouchable,
-                isLastSlide && styles.getStartedButtonFullWidth
+                isLastSlide && styles.getStartedButtonFullWidth,
+                { alignItems: 'center', justifyContent: 'center' },
               ]}
               onPressIn={() => onPressIn('main')}
               onPressOut={() => onPressOut('main')}
+              activeOpacity={0.9}
             >
-              <Animated.View style={[
-                styles.mainButton,
-                isLastSlide ? styles.getStartedButtonStyles : styles.nextButtonStyles,
-                { transform: [{ scale: mainButtonScale }] }
-              ]}>
-                <Text style={styles.mainButtonText}>
-                  {isLastSlide ? 'Get Started' : 'Next'}
-                </Text>
+              <Animated.View
+                style={[
+                  styles.mainButton,
+                  isLastSlide ? styles.getStartedButtonStyles : styles.nextButtonStyles,
+                  { transform: [{ scale: mainButtonScale }], width: getButtonWidth(isLastSlide) },
+                ]}
+              >
+                {/* Cross-fading/morphing labels */}
+                <Animated.Text
+                  style={[
+                    styles.mainButtonText,
+                    { position: 'absolute', opacity: mainLabelOpacity },
+                  ]}
+                >
+                  Next
+                </Animated.Text>
+                <Animated.Text
+                  style={[
+                    styles.mainButtonText,
+                    { position: 'absolute', opacity: getStartedLabelOpacity },
+                  ]}
+                >
+                  {isLastSlide ? 'Get Started' : 'OK'}
+                </Animated.Text>
               </Animated.View>
             </TouchableOpacity>
           </View>
@@ -291,16 +352,17 @@ const styles = StyleSheet.create({
     // Flex behavior managed by footer's justifyContent
   },
   mainButton: { // Common styles for Next/Get Started button (Animated.View)
-    borderRadius: 28, // Well-rounded corners
-    paddingVertical: 15,
+    borderRadius: 36, // Even more rounded
+    paddingVertical: 22,
+    paddingHorizontal: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    minWidth: width * 0.35, // Good minimum width
+    minWidth: 120, // Compact min for Next; width is animated
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2, // Subtle shadow
-    shadowRadius: 8,
-    elevation: 5,
+    shadowRadius: 14,
+    elevation: 7,
   },
   nextButtonStyles: { // Specific to "Next"
     backgroundColor: COLORS.primary,
@@ -316,8 +378,8 @@ const styles = StyleSheet.create({
   },
   mainButtonText: {
     color: COLORS.white,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     // fontFamily: 'YourApp-SemiBold',
   },
 });

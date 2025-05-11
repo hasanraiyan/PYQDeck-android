@@ -50,7 +50,7 @@ const RegisterScreen = ({ navigation }) => {
   const spinnerAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (loading) {
+    if (operationLoading) {
       // Shrink button and pulse spinner
       Animated.sequence([
         Animated.timing(scaleAnim, {
@@ -82,7 +82,7 @@ const RegisterScreen = ({ navigation }) => {
       spinnerAnim.setValue(1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading]);
+  }, [operationLoading]);
 
   const handleRegister = async () => {
     if (!name || !email || !password || !confirmPassword) {
