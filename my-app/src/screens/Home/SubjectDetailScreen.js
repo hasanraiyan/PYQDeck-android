@@ -134,18 +134,21 @@ export default function SubjectDetailScreen() {
     fetchInitialData();
   }, [subjectId, routeSubject, getSubjectDetails, fetchQuestions]);
 
-  const derivedYears = Array.from(new Set(allQuestions.map(q => q.year).filter(Boolean))).sort((a, b) => b - a);
+  // Memoize derived years to ensure stable reference
+  const derivedYears = React.useMemo(
+    () =>
+      Array.from(new Set(allQuestions.map(q => q.year).filter(Boolean))).sort((a, b) => b - a),
+    [allQuestions]
+  );
 
-  // --- Normalize modules ---
+  // --- Normalize modules, then memoize the result ---
   function normalizeModules(modulesRaw) {
-    // Helper: convert object with keys '0','1',... to string
     function objectToStringIfCharMap(obj) {
       if (
         obj && typeof obj === 'object' &&
         Object.keys(obj).length &&
         Object.keys(obj).every(key => /^\d+$/.test(key))
       ) {
-        // Sort keys numerically and join their values
         return Object.keys(obj)
           .sort((a, b) => Number(a) - Number(b))
           .map(k => obj[k])
@@ -154,12 +157,10 @@ export default function SubjectDetailScreen() {
       return obj;
     }
 
-    // Helper: remove leading "Module X:" if present
     function removeModulePrefix(str) {
       return str.replace(/^Module\s*\d+\s*:\s*/i, '');
     }
 
-    // flatten at most one level if modules comes as [[...]]
     let flat = Array.isArray(modulesRaw) && Array.isArray(modulesRaw[0]) ? modulesRaw.flat() : modulesRaw;
     return (flat || []).map(item => {
       if (typeof item === 'string') {
@@ -172,7 +173,10 @@ export default function SubjectDetailScreen() {
       return item;
     });
   }
-  const actualModules = normalizeModules(subject?.modules || []);
+  const actualModules = React.useMemo(
+    () => normalizeModules(subject?.modules || []),
+    [subject?.modules]
+  );
 
   // Branch/Semester info for header
   const branchName = subject?.branch?.name || userPreferences?.branch?.name || 'N/A';
@@ -281,7 +285,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.primaryDark, // Darker for more contrast
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 50,
+    paddingTop: Platform.OS === 'android' ? 10 : 10,
     paddingBottom: 15,
     paddingHorizontal: 15,
     elevation: 4,
