@@ -4,9 +4,30 @@ import HomeScreen from '../screens/HomeScreen';
 import LibraryScreen from '../screens/LibraryScreen';
 import SavedScreen from '../screens/SavedScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import SubjectDetailScreen from '../screens/SubjectDetailScreen';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import BrowseQuestionsScreen from '../screens/BrowseQuestionsScreen';
+import QuestionsListScreen from '../screens/QuestionsListScreen';
 
 const Tab = createBottomTabNavigator();
+const HomeStack = createNativeStackNavigator();
+
+function HomeStackNavigator() {
+  return (
+    <HomeStack.Navigator
+      screenOptions={{
+        headerShown: false
+      }}
+    >
+      <HomeStack.Screen name="HomeFeed" component={HomeScreen} />
+      <HomeStack.Screen name="SubjectDetail" component={SubjectDetailScreen} />
+      <HomeStack.Screen name="BrowseQuestions" component={BrowseQuestionsScreen} />
+      <HomeStack.Screen name="QuestionsList" component={QuestionsListScreen} />
+      {/* Additional screens as needed */}
+    </HomeStack.Navigator>
+  );
+}
 
 export default function AppNavigator() {
   return (
@@ -28,7 +49,7 @@ export default function AppNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Home" component={HomeStackNavigator} />
       <Tab.Screen name="Library" component={LibraryScreen} />
       <Tab.Screen name="Saved" component={SavedScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />

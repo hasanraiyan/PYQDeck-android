@@ -9,6 +9,7 @@ const API_URL = 'https://pyqdeck-server.onrender.com/api/v1';
 // Create the auth context
 const AuthContext = createContext();
 
+
 // Provider component
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
@@ -17,6 +18,30 @@ export const AuthProvider = ({ children }) => {
   const [operationLoading, setOperationLoading] = useState(false);
   const [error, setError] = useState(null);
   const [logoutCount, setLogoutCount] = useState(0); // NEW: For triggering AppProvider remount
+  const [onboardingCompleted, setOnboardingCompletedState] = useState(false); // Track onboarding status
+
+  // Load onboardingCompleted from AsyncStorage (called on mount or logout)
+  useEffect(() => {
+    const loadOnboardingCompleted = async () => {
+      try {
+        const completed = await AsyncStorage.getItem('onboarding_completed');
+        setOnboardingCompletedState(!!completed && completed === 'true');
+      } catch (e) {
+        console.error('[AuthContext] Failed to load onboarding_completed', e);
+      }
+    };
+    loadOnboardingCompleted();
+  }, [logoutCount]);
+
+  // Call this to set onboarding as completed (and persist)
+  const setOnboardingCompleted = async () => {
+    try {
+      await AsyncStorage.setItem('onboarding_completed', 'true');
+      setOnboardingCompletedState(true);
+    } catch (e) {
+      console.error('[AuthContext] Failed to save onboarding_completed', e);
+    }
+  };
 
   // Set up axios instance with auth header
   const authAxios = axios.create({
@@ -307,6 +332,8 @@ export const AuthProvider = ({ children }) => {
     operationLoading, // Replaces 'loading' for clarity
     error,
     logoutCount, // NEW: Expose this
+    onboardingCompleted, // Expose onboarding completed state
+    setOnboardingCompleted, // Expose method to mark onboarding as done
     register,
     login,
     logout,

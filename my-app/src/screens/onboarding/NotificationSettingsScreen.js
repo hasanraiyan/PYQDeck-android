@@ -6,11 +6,13 @@ import { useApp } from '../../context/AppContext';
 import OnboardingWrapper from '../../components/onboarding/OnboardingWrapper';
 import NextButton from '../../components/onboarding/NextButton';
 import { COLORS } from '../../constants/Colors';
+import { useAuth } from '../../context/AuthContext';
 
 const { width } = Dimensions.get('window');
 
 const NotificationSettingsScreen = () => {
   const { updatePreference, savePersonalizationPreferences, userPreferences, loading } = useApp();
+  const { setOnboardingCompleted } = useAuth();
   // Initialize local state for the switch from the context's userPreferences
   const [notificationsEnabled, setNotificationsEnabled] = useState(userPreferences.notificationsEnabled);
   // Local state for optional college input
@@ -26,7 +28,8 @@ const NotificationSettingsScreen = () => {
     
     if (success) {
       console.log("Personalization preferences saved successfully.");
-      // Navigation is handled by AppNavigator reacting to personalizationCompleted state change
+      await setOnboardingCompleted();
+      // Navigation happens automatically when onboardingCompleted changes
     } else {
       console.log("Failed to save personalization preferences.");
       // Error alert is likely shown from AppContext, but you can add more specific UI feedback here if needed.

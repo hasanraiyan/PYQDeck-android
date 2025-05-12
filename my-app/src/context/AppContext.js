@@ -1,4 +1,6 @@
 // my-app/src/context/AppContext.js
+const DEBUG = true; // Set true to print all backend responses
+
 import React, { createContext, useState, useContext, useCallback } from 'react';
 import { useAuth } from './AuthContext'; // Ensure this path is correct
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -134,6 +136,7 @@ export const AppProvider = ({ children }) => {
     setError(null);
     try {
       const response = await authAxios.get(`/semesters/${semesterId}/subjects`);
+      if (DEBUG) console.log('fetchSubjects:', response);
       if (response.data.success) {
         setSubjects(response.data.data);
         return response.data.data;
