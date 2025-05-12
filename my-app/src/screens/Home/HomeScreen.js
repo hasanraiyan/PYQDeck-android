@@ -344,7 +344,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.textTitle,
     paddingHorizontal: SPACING,
-    marginTop: SPACING,
     marginBottom: SPACING * 0.75,
   },
   listContentContainer: {

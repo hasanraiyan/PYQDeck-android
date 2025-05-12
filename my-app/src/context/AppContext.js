@@ -431,7 +431,7 @@ export const AppProvider = ({ children }) => {
     clearSelections,
 
     // New Personalization Onboarding
-    personalizationCompleted: personalizationReady,  // <--- robust check is now used for navigation logic
+    personalizationCompleted,  // Use the persisted completion flag instead of the robust check
     userPreferences,
     updatePreference,
     savePersonalizationPreferences,
