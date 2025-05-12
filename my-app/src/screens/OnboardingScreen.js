@@ -91,7 +91,7 @@ export default function OnboardingScreen() {
         // Animate button morph on slide transitions
         Animated.timing(nextToGetStarted, {
             toValue: activeSlide === slides.length - 1 ? 1 : 0,
-            duration: 250,
+            duration: 0,
             easing: Easing.out(Easing.quad),
             useNativeDriver: false, // Must be false for width animation (JS-driven)
         }).start();
@@ -159,7 +159,7 @@ export default function OnboardingScreen() {
                     width={width}
                     height={height * 0.67}
                     data={slides}
-                    scrollAnimationDuration={500}
+                    scrollAnimationDuration={200}
                     pagingEnabled
                     loop={false}
                     snapEnabled
@@ -216,7 +216,6 @@ export default function OnboardingScreen() {
                     scrollEnabled
                     enableSnap
                     autoPlay={false}
-                    currentIndex={activeSlide}
                 />
 
                 {/* Pagination anchored to bottom, above footer divider */}

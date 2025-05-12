@@ -47,8 +47,9 @@ export default function AuthLandingScreen() {
         <Image
           source={{
             uri: getPollinationsImageUrl(
-              "student searching previous year questions, books, laptop, education"
-            ),
+              "student logging into education platform with laptop, searching previous year questions, books, and study materials"
+            )
+            
           }}
           style={styles.illustration}
           resizeMode="contain"
@@ -127,7 +128,7 @@ const styles = StyleSheet.create({
   },
   topSection: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 0,
   },
   logoBgLanding: {
     width: 100,
@@ -163,11 +164,11 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   illustration: {
-    width: width * 0.68,
-    height: width * 0.5,
-    marginBottom: 32,
+    width: width * 0.85,  // Increased from 0.68 to 0.85
+    height: width * 0.68,  // Adjusted height to maintain aspect ratio
+    marginBottom: 20,
     marginTop: 0,
-  },
+  },  
   buttonsSection: {
     width: '100%',
     alignItems: 'center',
