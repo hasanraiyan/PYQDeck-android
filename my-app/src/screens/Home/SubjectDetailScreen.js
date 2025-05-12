@@ -2,7 +2,18 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Dimensions,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Dimensions,
+  StatusBar,
+  Animated,
+  Platform,
+  Pressable,
+  
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useApp } from '../../context/AppContext';
@@ -10,6 +21,7 @@ import { COLORS } from '../../constants/Colors';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
+const SPACING = 16;
 
 export default function SubjectDetailScreen() {
   const navigation = useNavigation();
@@ -27,17 +39,11 @@ export default function SubjectDetailScreen() {
         const apiRes = await getSubjectDetails(subjectId);
         const subj = apiRes && apiRes.data ? apiRes.data : apiRes;
         setSubject(subj);
-        if (typeof window !== 'undefined' && window.console) {
-          console.log('SUBJECT LOADED:', subj);
-        }
         // Dedupe modules if subject.modules is missing/empty
         if (!subj.modules || !Array.isArray(subj.modules) || subj.modules.length === 0) {
           if (fetchQuestions && subjectId) {
             const qRes = await fetchQuestions(subjectId, {});
             const questions = (qRes && qRes.questions) ? qRes.questions : [];
-            if (typeof window !== 'undefined' && window.console) {
-              console.log('ALL QUESTIONS RETURNED:', questions);
-            }
             const moduleMap = {};
             questions.forEach(q => {
               if (q.module && (q.module.module_code || q.module._id)) {
@@ -51,9 +57,6 @@ export default function SubjectDetailScreen() {
             });
             const modulesArr = Object.values(moduleMap);
             setDeducedModules(modulesArr);
-            if (typeof window !== 'undefined' && window.console) {
-              console.log('DEDUCED MODULES:', modulesArr);
-            }
           }
         } else {
           setDeducedModules([]); // clear - use subj.modules in display
@@ -71,202 +74,318 @@ export default function SubjectDetailScreen() {
     subject?.branch?.branch_code || userPreferences?.branch?.branch_code || '';
   const semesterLabel =
     subject?.semester?.number
-      ? `${subject.semester.number} (${subject.semester.semester_code || ''})`
-      : (userPreferences?.semester?.number ? `${userPreferences.semester.number} (${userPreferences.semester.semester_code || ''})` : '');
+      ? `Sem ${subject.semester.number}${subject.semester.semester_code ? ` (${subject.semester.semester_code})` : ''}`
+      : userPreferences?.semester?.number
+      ? `Sem ${userPreferences.semester.number}${userPreferences.semester.semester_code ? ` (${userPreferences.semester.semester_code})` : ''}`
+      : '';
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f5f6fb' }}>
+    <Pressable style={styles.screen} onPress={() => {}}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.primary} />
+      {/* Header */}
       <View style={styles.headerBar}>
         <TouchableOpacity
           onPress={navigation.goBack}
           style={styles.headerBackBtn}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 25 }}
         >
-          <MaterialCommunityIcons name="arrow-left" size={29} color="#fff" />
+          <MaterialCommunityIcons name="arrow-left" size={29} color={COLORS.white} />
         </TouchableOpacity>
         <Text numberOfLines={1} style={styles.headerTitle}>
           {subject?.name || 'Loading...'}
         </Text>
       </View>
       <ScrollView
-        contentContainerStyle={{ padding: 22, paddingBottom: 44 }}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         {loading ? (
-          <ActivityIndicator color={COLORS.primary} size="large" style={{ marginTop: 60 }} />
+          <View style={styles.centeredFeedback}>
+            <ActivityIndicator color={COLORS.primary} size="large" />
+            <Text style={styles.loadingText}>Loading subject details...</Text>
+          </View>
         ) : (
           <>
             {/* Basic Info Card */}
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Basic Info</Text>
+              <Text style={styles.cardTitle}>
+                <MaterialCommunityIcons name="information-outline" size={20} color={COLORS.primary} /> Basic Info
+              </Text>
               <View style={styles.divider} />
-              <InfoRow label="Code" value={subject?.code} />
-              <InfoRow label="Identifier" value={subject ? (subject.branch?.branch_code ? `${subject.branch.branch_code}_${subject.code}` : subject.code) : '-'} />
-              <InfoRow label="Branch" value={`${branchLabel}${branchCode ? ` (${branchCode})` : ''}`} />
-              <InfoRow label="Semester" value={semesterLabel} />
+              <InfoRow
+                icon="identifier"
+                label="Code"
+                value={subject?.code}
+              />
+              <InfoRow
+                icon="numeric"
+                label="Identifier"
+                value={
+                  subject 
+                    ? (subject.branch?.branch_code
+                        ? `${subject.branch.branch_code}_${subject.code}`
+                        : subject.code)
+                    : '-'
+                }
+              />
+              <InfoRow
+                icon="source-branch"
+                label="Branch"
+                value={`${branchLabel}${branchCode ? ` (${branchCode})` : ''}`}
+              />
+              <InfoRow
+                icon="format-list-numbered"
+                label="Semester"
+                value={semesterLabel}
+              />
             </View>
 
             {/* Modules Card */}
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Modules</Text>
+              <Text style={styles.cardTitle}>
+                <MaterialCommunityIcons name="view-module" size={20} color={COLORS.primary} /> Modules
+              </Text>
               <View style={styles.divider} />
-              {(subject && subject.modules && Array.isArray(subject.modules) && subject.modules.length > 0
+              {
+                (subject && subject.modules && Array.isArray(subject.modules) && subject.modules.length > 0
                   ? subject.modules
                   : deducedModules && deducedModules.length > 0
                 ) ? (
-                <View>
-                  {(subject && subject.modules && Array.isArray(subject.modules) && subject.modules.length > 0
-                    ? subject.modules
-                    : deducedModules
-                  ).map((mod, idx) => (
-                    <View
-                      key={mod._id || mod.module_code || mod.name || String(idx)}
-                      style={styles.moduleBtn}
-                    >
-                      <Text style={styles.moduleItem}>
-                        {mod && typeof mod === 'object' && !Array.isArray(mod)
-                          ? Object.values(mod).join('')
-                          : mod.name || mod.title || (typeof mod === 'string' ? mod : `Module ${idx + 1}`)}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              ) : (
-                <Text style={styles.emptyModuleText}>No module information available.</Text>
-              )}
+                  <View>
+                    {
+                      (subject && subject.modules && Array.isArray(subject.modules) && subject.modules.length > 0
+                        ? subject.modules
+                        : deducedModules
+                      ).map((mod, idx) => (
+                        <AnimatedModuleCard
+                          key={mod._id || mod.module_code || mod.name || String(idx)}
+                          mod={mod}
+                          idx={idx}
+                        />
+                      ))
+                    }
+                  </View>
+                ) : (
+                  <View style={styles.centeredFeedback}>
+                    <MaterialCommunityIcons
+                      name="cube-off-outline"
+                      size={32}
+                      color={COLORS.mediumGray}
+                      style={{ marginBottom: 8 }}
+                    />
+                    <Text style={styles.emptyModuleText}>No module information available.</Text>
+                  </View>
+                )
+              }
             </View>
 
             {/* Browse Questions Button */}
             <TouchableOpacity
               style={styles.browseBtn}
-              activeOpacity={0.90}
+              activeOpacity={0.88}
               onPress={() => navigation.navigate('BrowseQuestions', { subjectId: subject?._id, subject })}
             >
+              <MaterialCommunityIcons name="book-open-page-variant-outline" size={22} color={COLORS.white} />
               <Text style={styles.browseBtnText}>Browse Questions</Text>
-              <MaterialCommunityIcons name="arrow-right" size={22} color="#fff" />
+              <MaterialCommunityIcons name="arrow-right" size={20} color={COLORS.white} style={{ marginLeft: 2 }} />
             </TouchableOpacity>
           </>
         )}
       </ScrollView>
+    </Pressable>
+  );
+}
+
+function InfoRow({ label, value, icon }) {
+  return (
+    <View style={styles.infoRow}>
+      {icon && (
+        <MaterialCommunityIcons
+          name={icon}
+          size={18}
+          color={COLORS.primary}
+          style={{ marginRight: 7 }}
+        />
+      )}
+      <Text style={styles.infoLabel}>{label}:</Text>
+      <Text style={styles.infoValue}>{(value && value !== 'undefined') ? value : '-'}</Text>
     </View>
   );
 }
 
-function InfoRow({ label, value }) {
+function AnimatedModuleCard({ mod, idx }) {
+  const scale = React.useRef(new Animated.Value(1)).current;
+  const handlePressIn = () => {
+    Animated.spring(scale, { toValue: 0.98, useNativeDriver: true }).start();
+  };
+  const handlePressOut = () => {
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start();
+  };
+
+  // Display module name or fallback info
+  let label = '';
+  if (mod && typeof mod === 'object' && !Array.isArray(mod)) {
+    label = mod.name || mod.title || mod.module_code || `Module ${idx + 1}`;
+  } else {
+    label = typeof mod === 'string' ? mod : `Module ${idx + 1}`;
+  }
+
   return (
-    <View style={styles.infoRow}>
-      <Text style={styles.infoLabel}>{label}:</Text>
-      <Text style={styles.infoValue}>{value || '-'}</Text>
-    </View>
+    <Animated.View style={[styles.moduleCard, { transform: [{ scale }] }]}>
+      <Pressable
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={styles.moduleContent}
+        android_ripple={{ color: COLORS.lightBorder }}
+      >
+        <MaterialCommunityIcons
+          name="cube-outline"
+          size={22}
+          color={COLORS.primary}
+          style={{ marginRight: 12 }}
+        />
+        <Text style={styles.moduleItem}>{label}</Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#8576E3',
-    paddingTop: 44,
-    paddingBottom: 22,
-    paddingHorizontal: 12,
+    backgroundColor: COLORS.primary,
+    paddingTop: Platform.OS === 'ios' ? 44 : 8,
+    paddingBottom: 18,
+    paddingHorizontal: SPACING,
     elevation: 5,
-    shadowColor: '#bbb4f8',
-    shadowOpacity: 0.2,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.16,
     shadowRadius: 5,
+    borderBottomLeftRadius: 14,
+    borderBottomRightRadius: 14,
   },
   headerBackBtn: {
     marginRight: 10,
-    padding: 2,
+    padding: 6,
+    borderRadius: 50,
+    // backgroundColor: COLORS.accentBackground,
   },
   headerTitle: {
-    color: '#fff',
-    fontSize: 20,
+    color: COLORS.white,
+    fontSize: 22,
     flex: 1,
     fontWeight: 'bold',
     paddingLeft: 4,
-    letterSpacing: 0.6,
+    letterSpacing: 0.7,
+  },
+  scrollContent: {
+    padding: SPACING + 2,
+    paddingBottom: 54,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
     borderRadius: 18,
-    padding: 18,
-    marginBottom: 26,
+    padding: SPACING + 4,
+    marginBottom: SPACING * 1.5,
     elevation: 2,
-    shadowColor: '#DFD7F6',
-    shadowOpacity: 0.09,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
+    shadowColor: COLORS.shadowColor,
+    shadowOpacity: 0.11,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#252750',
+    color: COLORS.textTitle,
     marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   divider: {
-    borderBottomColor: '#ebebeb',
+    borderBottomColor: COLORS.lightBorder,
     borderBottomWidth: 1,
     marginVertical: 10,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 9,
   },
   infoLabel: {
     fontSize: 15,
-    color: '#727891',
+    color: COLORS.textSubtitle,
     fontWeight: '600',
-    marginRight: 12,
-    minWidth: 92,
+    marginRight: 8,
+    minWidth: 90,
   },
   infoValue: {
     fontSize: 15,
-    color: '#1C2431',
+    color: COLORS.textTitle,
     flex: 1,
     fontWeight: '500',
     flexWrap: 'wrap',
   },
-  moduleItem: {
-    paddingVertical: 4,
-    fontSize: 15,
-    color: '#4e557a',
-    marginBottom: 3,
+  moduleCard: {
+    borderRadius: 10,
+    backgroundColor: COLORS.accentBackground,
+    marginBottom: 7,
+    elevation: 1,
+    shadowColor: COLORS.shadowColor,
+    shadowOpacity: 0.09,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
   },
-  moduleBtn: {
+  moduleContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 1,
-    paddingVertical: 10,
-    backgroundColor: '#f6f5fa',
-    borderRadius: 7,
-    paddingHorizontal: 5,
-    marginBottom: 4,
+    paddingVertical: 11,
+    paddingHorizontal: 10,
+  },
+  moduleItem: {
+    fontSize: 15,
+    color: COLORS.textBody,
+    flexShrink: 1,
   },
   emptyModuleText: {
-    color: '#BAC1D3',
+    color: COLORS.mediumGray,
     fontSize: 15,
-    textAlign: 'left',
-    paddingVertical: 6,
+    textAlign: 'center',
+    paddingVertical: 10,
   },
   browseBtn: {
-    backgroundColor: '#8576E3',
+    backgroundColor: COLORS.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 25,
-    borderRadius: 11,
+    marginTop: SPACING * 1.6,
+    borderRadius: 13,
     paddingVertical: 17,
-    shadowColor: '#8576E3',
-    shadowOpacity: 0.18,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.13,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 5,
   },
   browseBtnText: {
-    color: '#fff',
+    color: COLORS.white,
     fontWeight: 'bold',
     fontSize: 18,
-    marginRight: 10,
+    marginHorizontal: 8,
     letterSpacing: 0.5,
+  },
+  centeredFeedback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 180,
+    paddingVertical: 28,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: COLORS.textBody,
+    marginTop: 14,
   },
 });
