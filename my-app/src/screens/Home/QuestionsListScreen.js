@@ -98,20 +98,64 @@ export default function QuestionsListScreen() {
               </View>
         }
         renderItem={({ item }) => (
-          <View style={styles.questionCard}>
-            <View style={styles.questionHeader}>
-              <Text style={styles.questionNo}>{item.qNumber || item.question_code_identifier || 'Q'}</Text>
-              <View style={styles.questionMetaRight}>
-                {item.marks && <Text style={styles.marks}>{item.marks} Marks</Text>}
-                {/* Assuming completed status might come with question data in future */}
-                {/* {item.completed && <MaterialCommunityIcons name="check-circle" size={20} color={COLORS.primary} style={{ marginLeft: 8 }} />} */}
-              </View>
+          <View style={styles.questionCardV2}>
+            {/* Tag Row */}
+            <View style={styles.cardTagRow}>
+              {item.year && (
+                <View style={[styles.cardTag, { backgroundColor: "#e9f6fc" }]}>
+                  <Text style={[styles.cardTagText, { color: "#18b6f6" }]}>{item.year}</Text>
+                </View>
+              )}
+              {(item.qNumber || item.question_code_identifier) && (
+                <View style={[styles.cardTag, { backgroundColor: "#fae8fd" }]}>
+                  <Text style={[styles.cardTagText, { color: "#c130dd" }]}>
+                    {item.qNumber || item.question_code_identifier}
+                  </Text>
+                </View>
+              )}
+              {item.marks && (
+                <View style={[styles.cardTag, { backgroundColor: "#fff1e3" }]}>
+                  <Text style={[styles.cardTagText, { color: "#ec8800" }]}>{item.marks} Marks</Text>
+                </View>
+              )}
+              <View style={{ flex: 1 }} />
+              <TouchableOpacity style={styles.cardIconBtn}>
+                <MaterialCommunityIcons name="bookmark-outline" color="#b8b9c2" size={23} />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.cardSwitchBtn}>
+                <View style={styles.fakeSwitchTrack}>
+                  <View style={styles.fakeSwitchThumb} />
+                </View>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.questionText}>{item.text || 'No question text available.'}</Text>
-            <View style={styles.metaTagsContainer}>
-              {item.chapter_module_name && <Text style={styles.metaTextTag}>Module: {item.chapter_module_name}</Text>}
-              {item.year && <Text style={styles.metaTextTag}>Year: {item.year}</Text>}
-              {item.type && <Text style={styles.metaTextTag}>Type: {item.type}</Text>}
+            {/* Module Title Row */}
+            {item.chapter_module_name && (
+              <View style={styles.cardModuleRow}>
+                <MaterialCommunityIcons
+                  name="book-open-variant"
+                  color="#755bc3"
+                  size={18}
+                />
+                <Text style={styles.cardModuleText}>
+                  {item.chapter_module_name.replace(/^Module\s*\d*\s*:?\s*/i, "")}
+                </Text>
+              </View>
+            )}
+            {/* Main Question */}
+            <Text style={styles.cardQuestionText}>{item.text || "No question text available."}</Text>
+            {/* Action Row */}
+            <View style={styles.cardActionRow}>
+              <TouchableOpacity style={styles.cardActionIcon}>
+                <MaterialCommunityIcons name="share-variant" size={22} color="#8893a6" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.cardActionIcon}>
+                <MaterialCommunityIcons name="content-copy" size={21} color="#8893a6" />
+              </TouchableOpacity>
+              <View style={{ flex: 1 }} />
+              <TouchableOpacity style={styles.cardAskAiBtn}>
+                <MaterialCommunityIcons name="robot-outline" color="#fff" size={21} />
+                <Text style={styles.cardAskAiBtnText}>Ask AI</Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -161,60 +205,111 @@ const styles = StyleSheet.create({
     marginTop: 15,
     lineHeight: 22,
   },
-  questionCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
-    elevation: 2,
-    shadowColor: COLORS.shadowColor,
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 }
+  // --- V2 Card Styles matching screenshot ---
+  questionCardV2: {
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 25,
+    shadowColor: "#b5b7c0",
+    shadowOpacity: 0.18,
+    shadowRadius: 13,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: "#ededfa",
   },
-  questionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+  cardTagRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 7,
+    minHeight: 28
+  },
+  cardTag: {
+    borderRadius: 13,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    marginRight: 7,
+    minWidth: 36,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  cardTagText: {
+    fontWeight: "bold",
+    fontSize: 13.1
+  },
+  cardIconBtn: {
+    padding: 4,
+    marginHorizontal: 2
+  },
+  cardSwitchBtn: {
+    marginLeft: 0,
+    padding: 3,
+  },
+  fakeSwitchTrack: {
+    width: 31,
+    height: 17,
+    backgroundColor: "#f0f0f1",
+    borderRadius: 99,
+    justifyContent: "center",
+    alignItems: "flex-end",
+    borderWidth: 1,
+    borderColor: "#ececec"
+  },
+  fakeSwitchThumb: {
+    width: 14,
+    height: 14,
+    backgroundColor: "#eee",
+    borderRadius: 7,
+    marginRight: 2,
+    borderWidth: 1,
+    borderColor: "#c8c8cf"
+  },
+  cardModuleRow: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
+    marginTop: 1
   },
-  questionNo: {
-    color: COLORS.primary,
-    fontWeight: 'bold',
-    fontSize: 16,
+  cardModuleText: {
+    color: "#755bc3",
+    fontWeight: "700",
+    fontSize: 15.1,
+    marginLeft: 6
   },
-  questionMetaRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  marks: {
-    color: COLORS.textSubtitle,
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  questionText: {
+  cardQuestionText: {
     color: COLORS.textBody,
-    fontSize: 15.5,
-    lineHeight: 23,
-    marginBottom: 10,
+    fontSize: 16,
+    fontWeight: "500",
+    lineHeight: 24.5,
+    marginBottom: 19,
+    marginTop: 2
   },
-  metaTagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.lightBorder,
-    paddingTop: 8,
+  cardActionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 5,
+    paddingTop: 2
   },
-  metaTextTag: {
-    backgroundColor: COLORS.accentBackground,
-    color: COLORS.primaryDark,
-    fontSize: 12,
-    fontWeight: '600',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginRight: 8,
-    marginBottom: 6,
+  cardActionIcon: {
+    padding: 6,
+    borderRadius: 14,
+    backgroundColor: "#f7f8fa",
+    marginRight: 10
+  },
+  cardAskAiBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#4427c1",
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 22,
+    marginLeft: 6
+  },
+  cardAskAiBtnText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 15,
+    marginLeft: 7
   },
 });
