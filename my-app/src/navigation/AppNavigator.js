@@ -1,38 +1,37 @@
-// my-app/src/navigation/AppNavigator.js
 import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
-import { useAuth } from '../context/AuthContext';
-import AuthNavigator from './AuthNavigator';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from '../screens/HomeScreen';
-import OnboardingStack from './OnboardingStack'; // This is for the initial feature showcase
-import { useApp } from '../context/AppContext';
-import PersonalizationOnboardingNavigator from './PersonalizationOnboardingNavigator'; // NEW
+import LibraryScreen from '../screens/LibraryScreen';
+import SavedScreen from '../screens/SavedScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 
-const AppNavigator = () => {
-  const { currentUser, initialAuthLoading } = useAuth();
-  const { onboardingCompleted, personalizationCompleted, initialAppLoading: appInitialLoading } = useApp();
-
-  if (initialAuthLoading || appInitialLoading) {
-    return null; // Or a loading screen
-  }
-
+export default function AppNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!onboardingCompleted ? (
-        <Stack.Screen name="FeatureOnboarding" component={OnboardingStack} />
-      ) : !currentUser ? (
-        <Stack.Screen name="Auth" component={AuthNavigator} />
-      ) : !personalizationCompleted ? ( // This is the key condition
-        <Stack.Screen name="PersonalizationOnboarding" component={PersonalizationOnboardingNavigator} />
-      ) : ( // currentUser must exist and personalizationCompleted is true
-        <Stack.Group>
-          <Stack.Screen name="Home" component={HomeScreen} />
-        </Stack.Group>
-      )}
-    </Stack.Navigator>
+    <Tab.Navigator
+      initialRouteName="Home"
+      screenOptions={({ route }) => ({
+        tabBarActiveTintColor: '#3479f6',
+        tabBarInactiveTintColor: '#7c879e',
+        tabBarShowLabel: true,
+        tabBarLabelStyle: { fontSize: 13 },
+        headerShown: false,
+        tabBarIcon: ({ color, size }) => {
+          let iconName;
+          if (route.name === 'Home') iconName = 'home-variant';
+          else if (route.name === 'Library') iconName = 'book-open-variant';
+          else if (route.name === 'Saved') iconName = 'heart-outline';
+          else if (route.name === 'Profile') iconName = 'account-circle-outline';
+          return <MaterialCommunityIcons name={iconName} color={color} size={size} />;
+        },
+      })}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Library" component={LibraryScreen} />
+      <Tab.Screen name="Saved" component={SavedScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
   );
-};
-
-export default AppNavigator;
+}

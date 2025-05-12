@@ -331,14 +331,17 @@ export const AppProvider = ({ children }) => {
     try {
       const finalPrefsToStoreInStorage = {
         userId: currentUser?._id || 'unknown_user_id_in_prefs',
-        // Ensure branch and semester are simplified to their key identifiers or relevant string
-        branch: userPreferences.branch?.branch_code || userPreferences.branch?.name || userPreferences.branch || null,
-        semester: userPreferences.semester?.number || userPreferences.semester || null,
-        college: userPreferences.college || null, // Already a string or null
+        // Store full branch and its id
+        branch: userPreferences.branch ? { ...userPreferences.branch } : null,
+        branchId: userPreferences.branch && userPreferences.branch._id ? userPreferences.branch._id : null,
+        // Store full semester and its id
+        semester: userPreferences.semester ? { ...userPreferences.semester } : null,
+        semesterId: userPreferences.semester && userPreferences.semester._id ? userPreferences.semester._id : null,
+        college: userPreferences.college || null,
         goal: userPreferences.goal || null,
         frequency: userPreferences.frequency || null,
         preferredContent: userPreferences.preferredContent || null,
-        notifications: finalNotificationsEnabledValue, // Use the directly passed value
+        notifications: finalNotificationsEnabledValue,
         language: userPreferences.language || 'English',
       };
       console.log("[AppContext] Object being stored in AsyncStorage:", JSON.stringify(finalPrefsToStoreInStorage, null, 2));

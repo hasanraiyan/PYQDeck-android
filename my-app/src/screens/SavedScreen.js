@@ -1,13 +1,13 @@
-// HomeScreen.js – Placeholder
+// SavedScreen.js – Placeholder
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-export default function HomeScreen() {
+export default function SavedScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Home</Text>
-      <Text style={styles.subtitle}>This is the Home screen. Content coming soon.</Text>
+      <Text style={styles.title}>Saved</Text>
+      <Text style={styles.subtitle}>This is the Saved screen. Content coming soon.</Text>
     </View>
   );
 }
