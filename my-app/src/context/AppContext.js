@@ -12,11 +12,14 @@ export const AppProvider = ({ children }) => {
 
   // Onboarding state — in context + persistent
   const [onboardingCompleted, setOnboardingCompletedState] = useState(false);
+  const [personalizationCompleted, setPersonalizationCompletedState] = useState(false);
 
   React.useEffect(() => {
     const loadOnboarding = async () => {
       const stored = await AsyncStorage.getItem('onboardingCompleted');
       setOnboardingCompletedState(stored === 'true');
+      const personalization = await AsyncStorage.getItem('personalizationCompleted');
+      setPersonalizationCompletedState(personalization === 'true');
     };
     loadOnboarding();
   }, []);
@@ -24,6 +27,11 @@ export const AppProvider = ({ children }) => {
   const setOnboardingCompleted = async (value) => {
     setOnboardingCompletedState(!!value);
     await AsyncStorage.setItem('onboardingCompleted', value ? 'true' : 'false');
+  };
+
+  const setPersonalizationCompleted = async (value) => {
+    setPersonalizationCompletedState(!!value);
+    await AsyncStorage.setItem('personalizationCompleted', value ? 'true' : 'false');
   };
 
   // State for branches, semesters, subjects, and questions
@@ -34,6 +42,33 @@ export const AppProvider = ({ children }) => {
   const [currentBranch, setCurrentBranch] = useState(null);
   const [currentSemester, setCurrentSemester] = useState(null);
   const [currentSubject, setCurrentSubject] = useState(null);
+
+  // User Preferences state
+  const [userPreferences, setUserPreferences] = useState({});
+
+  // Load preferences from AsyncStorage on mount
+  React.useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        const storedPrefs = await AsyncStorage.getItem('userPreferences');
+        if (storedPrefs) {
+          setUserPreferences(JSON.parse(storedPrefs));
+        }
+      } catch (e) {
+        // Optionally handle error
+      }
+    };
+    loadPreferences();
+  }, []);
+
+  // Function to update a single preference and persist it
+  const updatePreference = (key, value) => {
+    setUserPreferences(prev => {
+      const updated = { ...prev, [key]: value };
+      AsyncStorage.setItem('userPreferences', JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   // Loading and error states
   const [loading, setLoading] = useState(false);
@@ -282,6 +317,10 @@ export const AppProvider = ({ children }) => {
     currentSubject,
     loading,
     error,
+
+    // User Preferences
+    userPreferences,
+    updatePreference,
 
     // Methods
     fetchBranches,

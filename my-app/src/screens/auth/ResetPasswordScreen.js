@@ -14,21 +14,9 @@ import {
   Image,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { COLORS } from '../../constants/Colors';
 
 const { width, height } = Dimensions.get('window');
-
-const COLORS = {
-  primary: '#7C6BEE',
-  primaryDark: '#5F4BE2',
-  white: '#FFFFFF',
-  background: '#FFFFFF',
-  textTitle: '#1D2737',
-  textBody: '#4A5568',
-  textSecondary: '#6B7280',
-  inactiveDot: '#D1D5DB',
-  lightBorder: '#E5E7EB',
-  shadowColor: '#A0AEC0',
-};
 
 // Helper to generate Pollinations onboarding image URLs with style keywords
 const getPollinationsImageUrl = (prompt) => {

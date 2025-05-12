@@ -10,20 +10,9 @@ import {
   Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { COLORS } from '../constants/Colors';
 
 const { width } = Dimensions.get('window');
-
-const COLORS = {
-  primary: '#7C6BEE', // Purple
-  primaryDark: '#5F4BE2',
-  white: '#FFFFFF',
-  background: '#FFFFFF',
-  textTitle: '#22223B',
-  textSubtitle: '#72727E',
-  textBody: '#6B7280',
-  border: '#DADADA',
-  google: '#4285F4',
-};
 
 // Helper to generate Pollinations onboarding image URLs with style keywords
 const getPollinationsImageUrl = (prompt) => {

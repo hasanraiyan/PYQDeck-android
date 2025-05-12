@@ -15,22 +15,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
+import { COLORS } from '../../constants/Colors';
 
 const { width, height } = Dimensions.get('window');
-
-// Reuse color palette from OnboardingScreen for consistent branding
-const COLORS = {
-  primary: '#7C6BEE',
-  primaryDark: '#5F4BE2',
-  white: '#FFFFFF',
-  background: '#FFFFFF',
-  textTitle: '#1D2737',
-  textBody: '#4A5568',
-  textSecondary: '#6B7280',
-  inactiveDot: '#D1D5DB',
-  lightBorder: '#E5E7EB',
-  shadowColor: '#A0AEC0',
-};
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
