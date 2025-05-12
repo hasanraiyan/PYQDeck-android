@@ -28,8 +28,10 @@
     "expo-updates": "~0.28.12",
     "react": "19.0.0",
     "react-native": "0.79.2",
+    "react-native-pager-view": "^6.7.1",
     "react-native-reanimated-carousel": "^4.0.2",
-    "react-native-safe-area-context": "5.4.0"
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-tab-view": "^4.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
