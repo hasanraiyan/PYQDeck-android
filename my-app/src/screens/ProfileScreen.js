@@ -215,22 +215,7 @@ export default function ProfileScreen() {
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Study Preferences</Text>
-          {userPreferences ? (
-            <>
-              <DetailRow label="Goal" value={userPreferences.goal} iconName="target" iconColor={COLORS.primary} />
-              <DetailRow label="Frequency" value={userPreferences.frequency} iconName="calendar-clock-outline" iconColor={COLORS.primary}/>
-              <DetailRow label="Content" value={userPreferences.preferredContent} iconName="book-open-variant" iconColor={COLORS.primary}/>
-              <DetailRow
-                label="Notifications"
-                value={userPreferences.notificationsEnabled ? 'Enabled' : 'Disabled'}
-                iconName={userPreferences.notificationsEnabled ? "bell-ring-outline" : "bell-off-outline"}
-                iconColor={COLORS.primary}
-              />
-              <DetailRow label="Language" value={userPreferences.language} iconName="translate" iconColor={COLORS.primary}/>
-            </>
-          ) : (
-            <Text style={styles.placeholderText}>Loading preferences or not set.</Text>
-          )}
+          <ProfilePreferencesEditor userPreferences={userPreferences} updatePreference={updatePreference} savePersonalizationPreferences={null} />
         </View>
 
         <View style={styles.card}>
@@ -432,6 +417,204 @@ export default function ProfileScreen() {
 
       </ScrollView>
     </LinearGradient>
+  );
+}
+/**
+ * Allows editing all profile preferences in place.
+ * Edits save values directly to context with updatePreference.
+ */
+import { TextInput, Switch } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+
+function ProfilePreferencesEditor({ userPreferences, updatePreference }) {
+  const { branches, fetchBranches, semesters, fetchSemesters } = useApp();
+  const [editing, setEditing] = useState(false);
+  const [edited, setEdited] = useState({ ...userPreferences });
+
+  // Dropdown data for select fields
+  const goals = ['Get good grades', 'Preparation', 'Deep learning', 'Career', 'Other'];
+  const frequencies = ['Daily', 'Weekly', 'Occasionally'];
+  const preferredContents = ['Theory', 'MCQ', 'Diagrams', 'Numericals', 'All'];
+  const languages = ['English', 'Hindi', 'Other'];
+
+  useEffect(() => {
+    setEdited({ ...userPreferences });
+  }, [userPreferences]);
+
+  // When branch is changed, fetch semesters for branch and clear semester
+  useEffect(() => {
+    if (editing && edited.branch && typeof edited.branch === "string") {
+      const branchObj =
+        branches.find(
+          b =>
+            b._id === edited.branch ||
+            b.branch_code === edited.branch
+        ) || null;
+      if (branchObj && (!edited.branch._id || branchObj._id !== edited.branch._id)) {
+        // Update object representation if needed.
+        setEdited(prev => ({ ...prev, branch: branchObj, semester: null }));
+        fetchSemesters && branchObj._id && fetchSemesters(branchObj._id);
+      }
+    }
+  }, [editing, edited.branch, branches, fetchSemesters]);
+
+  if (!userPreferences) {
+    return <Text style={styles.placeholderText}>Loading preferences or not set.</Text>;
+  }
+  if (!editing) {
+    return (
+      <>
+        <DetailRow label="Goal" value={userPreferences.goal} iconName="target" iconColor={COLORS.primary} />
+        <DetailRow label="Frequency" value={userPreferences.frequency} iconName="calendar-clock-outline" iconColor={COLORS.primary} />
+        <DetailRow label="Content" value={userPreferences.preferredContent} iconName="book-open-variant" iconColor={COLORS.primary} />
+        <DetailRow
+          label="Notifications"
+          value={userPreferences.notificationsEnabled ? 'Enabled' : 'Disabled'}
+          iconName={userPreferences.notificationsEnabled ? "bell-ring-outline" : "bell-off-outline"}
+          iconColor={COLORS.primary}
+        />
+        <DetailRow label="Language" value={userPreferences.language} iconName="translate" iconColor={COLORS.primary} />
+        <DetailRow label="College" value={userPreferences.college} iconName="domain" iconColor={COLORS.primary} />
+        <DetailRow label="Branch" value={userPreferences.branch && userPreferences.branch.name ? userPreferences.branch.name : '-'} iconName="school-outline" iconColor={COLORS.primary} />
+        <DetailRow label="Semester" value={userPreferences.semester && userPreferences.semester.number ? String(userPreferences.semester.number) : '-'} iconName="counter" iconColor={COLORS.primary} />
+        <TouchableOpacity
+          style={[styles.testBtn, { marginTop: 8, width: 120, alignSelf: "center", backgroundColor: COLORS.primaryDark }]}
+          onPress={() => setEditing(true)}
+        >
+          <Text style={{ color: "#fff", fontWeight: "700" }}>Edit</Text>
+        </TouchableOpacity>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <View style={{ marginBottom: 14 }}>
+        <Text style={{ marginBottom: 4, fontWeight: "600" }}>Branch:</Text>
+        <Picker
+          selectedValue={edited.branch && edited.branch._id ? String(edited.branch._id) : ""}
+          style={{ height: 40 }}
+          onValueChange={val => {
+            const branchObj = branches.find(b => String(b._id) === val);
+            setEdited(prev => ({
+              ...prev,
+              branch: branchObj || null,
+              semester: null, // Clear semester on branch change
+            }));
+            if (branchObj?._id) fetchSemesters && fetchSemesters(branchObj._id);
+          }}
+        >
+          <Picker.Item label="Select branch..." value="" />
+          {branches.map(b => (
+            <Picker.Item key={b._id} label={b.name} value={String(b._id)} />
+          ))}
+        </Picker>
+      </View>
+      <View style={{ marginBottom: 14 }}>
+        <Text style={{ marginBottom: 4, fontWeight: "600" }}>Semester:</Text>
+        {(!edited.branch || !edited.branch._id) ? (
+          <Picker enabled={false} selectedValue="">
+            <Picker.Item label="Select branch first..." value="" />
+          </Picker>
+        ) : (
+          <Picker
+            selectedValue={edited.semester && edited.semester._id ? String(edited.semester._id) : ""}
+            style={{ height: 40 }}
+            onValueChange={val => {
+              const semObj = semesters.find(s => String(s._id) === val);
+              setEdited(prev => ({
+                ...prev,
+                semester: semObj || null
+              }));
+            }}
+            enabled={!!(edited.branch && edited.branch._id)}
+          >
+            <Picker.Item label="Select semester..." value="" />
+            {semesters.map(s => (
+              <Picker.Item key={s._id} label={"Semester " + s.number} value={String(s._id)} />
+            ))}
+          </Picker>
+        )}
+      </View>
+      <View style={{ marginBottom: 14 }}>
+        <Text style={{ marginBottom: 4, fontWeight: "600" }}>Goal:</Text>
+        <Picker
+          selectedValue={edited.goal}
+          style={{ height: 38 }}
+          onValueChange={val => setEdited(prev => ({ ...prev, goal: val }))}
+        >
+          {goals.map(str => <Picker.Item key={str} label={str} value={str} />)}
+        </Picker>
+      </View>
+      <View style={{ marginBottom: 14 }}>
+        <Text style={{ marginBottom: 4, fontWeight: "600" }}>Frequency:</Text>
+        <Picker
+          selectedValue={edited.frequency}
+          style={{ height: 38 }}
+          onValueChange={val => setEdited(prev => ({ ...prev, frequency: val }))}
+        >
+          {frequencies.map(str => <Picker.Item key={str} label={str} value={str} />)}
+        </Picker>
+      </View>
+      <View style={{ marginBottom: 14 }}>
+        <Text style={{ marginBottom: 4, fontWeight: "600" }}>Content Preference:</Text>
+        <Picker
+          selectedValue={edited.preferredContent}
+          style={{ height: 38 }}
+          onValueChange={val => setEdited(prev => ({ ...prev, preferredContent: val }))}
+        >
+          {preferredContents.map(str => <Picker.Item key={str} label={str} value={str} />)}
+        </Picker>
+      </View>
+      <View style={{ marginBottom: 14 }}>
+        <Text style={{ marginBottom: 4, fontWeight: "600" }}>Notifications:</Text>
+        <Switch
+          value={!!edited.notificationsEnabled}
+          onValueChange={val => setEdited(prev => ({ ...prev, notificationsEnabled: val }))}
+        />
+      </View>
+      <View style={{ marginBottom: 18 }}>
+        <Text style={{ marginBottom: 4, fontWeight: "600" }}>Language:</Text>
+        <Picker
+          selectedValue={edited.language}
+          style={{ height: 38 }}
+          onValueChange={val => setEdited(prev => ({ ...prev, language: val }))}
+        >
+          {languages.map(str => <Picker.Item key={str} label={str} value={str} />)}
+        </Picker>
+      </View>
+      <View style={{ marginBottom: 18 }}>
+        <Text style={{ marginBottom: 4, fontWeight: "600" }}>College:</Text>
+        <TextInput
+          style={{ backgroundColor: "#f7fafc", borderRadius: 7, padding: 10, fontSize: 15, borderWidth: 1, borderColor: COLORS.lightBorder }}
+          value={edited.college || ""}
+          placeholder="Enter college name"
+          onChangeText={val => setEdited(prev => ({ ...prev, college: val }))}
+        />
+      </View>
+      <View style={{ flexDirection: "row", justifyContent: "center", gap: 12 }}>
+        <TouchableOpacity
+          style={[styles.testBtn, { width: 100, backgroundColor: COLORS.primary }]}
+          onPress={() => {
+            Object.entries(edited).forEach(([key, value]) => {
+              if (userPreferences[key] !== value) updatePreference(key, value);
+            });
+            setEditing(false);
+          }}
+        >
+          <Text style={{ color: "#fff", fontWeight: "700" }}>Save</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.testBtn, { width: 100, backgroundColor: COLORS.error }]}
+          onPress={() => {
+            setEdited({ ...userPreferences });
+            setEditing(false);
+          }}
+        >
+          <Text style={{ color: "#fff", fontWeight: "700" }}>Cancel</Text>
+        </TouchableOpacity>
+      </View>
+    </>
   );
 }
 

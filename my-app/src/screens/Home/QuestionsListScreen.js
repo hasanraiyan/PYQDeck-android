@@ -11,6 +11,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { Share } from 'react-native';
 import Markdown from 'react-native-markdown-display';
+// Remove Katex import.
+import RenderHTML from 'react-native-render-html';
+import MarkdownIt from 'markdown-it';
+import markdownItKatex from 'markdown-it-katex';
 
 export default function QuestionsListScreen() {
   // --- Helper: format question for share/copy ---
@@ -99,6 +103,8 @@ export default function QuestionsListScreen() {
     userPreferences?.semester?.number ||
     'N/A';
 
+// ... previous code (no changes to QuestionsListScreen) ...
+
   return (
     <View style={{ flex: 1, backgroundColor: '#f5f6fb' }}>
       {/* Status bar to match SubjectDetailScreen */}
@@ -182,28 +188,10 @@ export default function QuestionsListScreen() {
               </View>
             )}
             {/* Main Question */}
-            <Markdown
-              style={markdownStyles}
-              mergeStyle={true}
-              rules={{
-                image: (node, children, parent, styles) => {
-                  // Forward all props to a dedicated component to use hooks safely
-                  const { key, src, alt, width, height, ...restProps } = node.attributes || {};
-                  return (
-                    <MarkdownQuestionImage
-                      key={key || src || alt || Math.random()}
-                      src={src}
-                      alt={alt}
-                      width={width}
-                      height={height}
-                      restProps={restProps}
-                    />
-                  );
-                }
-              }}
-            >
-              {item.text || "No question text available."}
-            </Markdown>
+            <QuestionMarkdownMathHTML
+              text={item.text || "No question text available."}
+              cardWidth={styles.questionCardV2.width || 340}
+            />
             {/* Action Row */}
             <View style={styles.cardActionRow}>
               <TouchableOpacity
@@ -228,6 +216,63 @@ export default function QuestionsListScreen() {
         )}
       />
     </View>
+  );
+}
+
+/**
+ * Renders markdown+math as HTML inside a card, with full whitespace/math/image support.
+ * Uses markdown-it + markdown-it-katex for server-side conversion; react-native-render-html for display.
+ */
+function QuestionMarkdownMathHTML({ text, cardWidth }) {
+  // Configure markdown-it with KaTeX for inline/block math
+  const md = React.useMemo(() => {
+    return MarkdownIt({ breaks: true, html: true })
+      .use(markdownItKatex, { throwOnError: false, errorColor: " #cc0000" });
+  }, []);
+  // Compile markdown+math to HTML
+  const html = React.useMemo(() => md.render(text || ""), [md, text]);
+  // For images to scale, pass contentWidth.
+  const width = cardWidth || 300;
+  return (
+    <RenderHTML
+      contentWidth={width}
+      source={{ html }}
+      baseStyle={{ fontSize: 16, color: COLORS.textBody, lineHeight: 23 }}
+      systemFonts={['Arial', 'Menlo', 'monospace', 'sans-serif']}
+      enableExperimentalBRCollapsing={true}
+      tagsStyles={{
+        img: {
+          maxWidth: "100%",
+          borderRadius: 7,
+          marginVertical: 7,
+          backgroundColor: "#f8f8fc"
+        },
+        code: {
+          backgroundColor: "#eeeefa",
+          borderRadius: 6,
+          padding: 3,
+          fontSize: 15,
+          fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+          color: "#705dc7",
+        },
+        pre: {
+          backgroundColor: "#eeedfa",
+          borderRadius: 7,
+          padding: 7,
+          marginVertical: 5,
+          fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+        },
+        p: { marginVertical: 4 },
+        li: { marginVertical: 1 },
+        ul: { marginLeft: 16 },
+        ol: { marginLeft: 16 },
+        h1: { fontSize: 20, fontWeight: "bold", color: COLORS.primaryDark },
+        h2: { fontSize: 18, fontWeight: "bold", color: COLORS.primary },
+        h3: { fontSize: 16, fontWeight: "bold" },
+      }}
+      enableExperimentalRtl={false}
+      ignoredStyles={['width', 'height', 'fontFamily']}
+    />
   );
 }
 
@@ -317,7 +362,6 @@ function MarkdownQuestionImage({ src, alt, width, height, restProps }) {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   headerBar: {
     flexDirection: 'row',
