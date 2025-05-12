@@ -8,8 +8,48 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useApp } from '../../context/AppContext';
 import { COLORS } from '../../constants/Colors';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
+import { Share } from 'react-native';
+import Markdown from 'react-native-markdown-display';
 
 export default function QuestionsListScreen() {
+  // --- Helper: format question for share/copy ---
+  function formatQuestion(item) {
+    let metaParts = [];
+    if (item.year) metaParts.push(item.year);
+    if (item.qNumber || item.question_code_identifier) metaParts.push(item.qNumber || item.question_code_identifier);
+    if (item.marks) metaParts.push(`${item.marks} Marks`);
+    let header = metaParts.join(' | ');
+    let moduleLabel = "";
+    if (item.chapter_module_name) {
+      // Remove Module, numbers, colons
+      moduleLabel = item.chapter_module_name.replace(/^Module\s*\d*\s*:?\s*/i, "");
+    }
+    let s = "";
+    if (header) s += header + "\n";
+    if (moduleLabel) s += `Module: ${moduleLabel}\n`;
+    s += item.text || "";
+    return s.trim();
+  }
+
+  // --- Share using react-native Share API ---
+  async function handleShareQuestion(item) {
+    try {
+      const text = formatQuestion(item);
+      await Share.share({ message: text });
+    } catch (err) {
+      alert('Could not share question. ' + err?.message || String(err));
+    }
+  }
+
+  // --- Copy to clipboard using expo-clipboard ---
+  async function handleCopyQuestion(item) {
+    try {
+      await Clipboard.setStringAsync(formatQuestion(item));
+    } catch (err) {
+      alert('Could not copy. ' + err?.message || String(err));
+    }
+  }
   const navigation = useNavigation();
   const route = useRoute();
   const { subjectId, year, module, subject } = route.params || {};
@@ -142,13 +182,55 @@ export default function QuestionsListScreen() {
               </View>
             )}
             {/* Main Question */}
-            <Text style={styles.cardQuestionText}>{item.text || "No question text available."}</Text>
+            <Markdown
+              style={markdownStyles}
+              mergeStyle={true}
+              rules={{
+                image: (node, children, parent, styles) => {
+                  // Destructure key and all other props
+                  const { key, src, alt, width, height, ...restProps } = node.attributes || {};
+                  // Sizing logic:
+                  let imageProps = { ...restProps };
+                  if (width && height) {
+                    imageProps.width = Number(width);
+                    imageProps.height = Number(height);
+                  }
+                  // By default, use flex-shrink and maxWidth to avoid overflow
+                  return (
+                    <View key={key || src || alt || Math.random()} style={{ alignItems: "center", marginVertical: 7 }}>
+                      <Image
+                        source={{ uri: src }}
+                        alt={alt}
+                        style={{
+                          width: imageProps.width || "100%",
+                          height: imageProps.height || 180,
+                          maxWidth: "100%",
+                          resizeMode: "contain",
+                          borderRadius: 7,
+                          backgroundColor: "#f7f8fa"
+                        }}
+                        accessible={true}
+                        accessibilityLabel={alt}
+                      />
+                    </View>
+                  );
+                }
+              }}
+            >
+              {item.text || "No question text available."}
+            </Markdown>
             {/* Action Row */}
             <View style={styles.cardActionRow}>
-              <TouchableOpacity style={styles.cardActionIcon}>
+              <TouchableOpacity
+                style={styles.cardActionIcon}
+                onPress={() => handleShareQuestion(item)}
+              >
                 <MaterialCommunityIcons name="share-variant" size={22} color="#8893a6" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.cardActionIcon}>
+              <TouchableOpacity
+                style={styles.cardActionIcon}
+                onPress={() => handleCopyQuestion(item)}
+              >
                 <MaterialCommunityIcons name="content-copy" size={21} color="#8893a6" />
               </TouchableOpacity>
               <View style={{ flex: 1 }} />
@@ -313,3 +395,100 @@ const styles = StyleSheet.create({
     marginLeft: 7
   },
 });
+
+// --- Styles for Markdown content inside the card ---
+const markdownStyles = {
+  body: {
+    color: COLORS.textBody,
+    fontSize: 16,
+    fontWeight: "500",
+    lineHeight: 24.5,
+    marginBottom: 19,
+    marginTop: 2
+  },
+  paragraph: {
+    marginTop: 2,
+    marginBottom: 6,
+  },
+  strong: {
+    fontWeight: 'bold',
+    color: COLORS.primaryDark,
+  },
+  em: {
+    fontStyle: 'italic'
+  },
+  code_inline: {
+    backgroundColor: "#eeeefa",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    fontSize: 15,
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    color: "#705dc7"
+  },
+  code_block: {
+    backgroundColor: "#eeedfa",
+    paddingHorizontal: 9,
+    paddingVertical: 7,
+    borderRadius: 6,
+    fontSize: 15,
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    color: "#333",
+    marginVertical: 5
+  },
+  fence: {
+    backgroundColor: "#eeedfa",
+    paddingHorizontal: 9,
+    paddingVertical: 7,
+    borderRadius: 6,
+    fontSize: 15,
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    color: "#333",
+    marginVertical: 5
+  },
+  image: {
+    marginVertical: 7,
+    borderRadius: 7,
+    width: "100%",
+    maxWidth: "100%",
+    resizeMode: "contain",
+    backgroundColor: "#f8f8fc"
+  },
+  blockquote: {
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
+    backgroundColor: "#f3f2fa",
+    paddingLeft: 11,
+    marginVertical: 8
+  },
+  bullet_list: {
+    marginVertical: 5
+  },
+  ordered_list: {
+    marginVertical: 5
+  },
+  list_item: {
+    flexDirection: "row",
+    marginVertical: 2
+  },
+  heading1: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    margin: 0,
+    color: COLORS.primaryDark
+  },
+  heading2: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    margin: 0,
+    color: COLORS.primary
+  },
+  heading3: {
+    fontSize: 17,
+    fontWeight: 'bold'
+  },
+  link: {
+    color: COLORS.primary,
+    textDecorationLine: "underline"
+  },
+};
