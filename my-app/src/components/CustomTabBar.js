@@ -3,7 +3,7 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-
+import { COLORS } from '../constants/Colors';
 const TABS = [
   {
     name: 'Home',
@@ -61,7 +61,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
             <View style={styles.tabContent}>
                 <MaterialCommunityIcons
                 name={tabInfo.icon}
-                color={isFocused ? '#3479f6' : '#7c879e'}
+                color={isFocused ? COLORS.primary : '#7c879e'}
                 size={26}
                 />
                 <Text style={[styles.label, isFocused && styles.labelActive]}>
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
       bottom: 0, // Position at the bottom
       width: '70%', // Indicator width
       height: 3, // Indicator thickness
-      backgroundColor: '#3479f6', // Solid active color
+      backgroundColor: COLORS.primary, // Solid active color
       borderRadius: 2, // Slightly rounded ends
   },
   label: {
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   labelActive: {
-    color: '#3479f6',
+    color: COLORS.primary,
     fontWeight: '700',
   },
 });

@@ -1,62 +1,74 @@
+// src/screens/Home/HomeScreen.js
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, 
-  ActivityIndicator, Dimensions, StatusBar, Animated, Platform
+  View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput,
+  ActivityIndicator, Dimensions, StatusBar, Animated, Platform, Keyboard, Pressable
 } from 'react-native';
 import { useApp } from '../../context/AppContext';
-import { COLORS } from '../../constants/Colors';
+import { COLORS } from '../../constants/Colors'; // Ensure this path is correct
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 const SPACING = 16;
+const CARD_WIDTH = width - (SPACING * 2);
 
 export default function HomeScreen() {
   const {
+    currentUser, // Assuming currentUser is available from useApp or needs to be from useAuth
     userPreferences,
     fetchSubjects,
     subjects,
-    loading,
+    loading, // This is the general loading from AppContext for fetching subjects
     error,
   } = useApp();
   const navigation = useNavigation();
 
   const [search, setSearch] = useState('');
   const [filteredSubjects, setFilteredSubjects] = useState([]);
-  const [loadingFeed, setLoadingFeed] = useState(false);
+  const [initialFeedLoading, setInitialFeedLoading] = useState(true); // Specific for initial screen render
   const [searchFocused, setSearchFocused] = useState(false);
-  
-  // Animation references
+
   const animatedScales = useRef({}).current;
   const scrollY = useRef(new Animated.Value(0)).current;
-  const headerElevation = scrollY.interpolate({
-    inputRange: [0, 50],
-    outputRange: [0, 3],
+
+  const headerTranslateY = scrollY.interpolate({
+    inputRange: [0, 80],
+    outputRange: [0, -30], // Adjust this value to control how much header scrolls up
     extrapolate: 'clamp',
   });
 
-  // Get user data from context
-  const branch = userPreferences?.branch?.name || '';
-  const branchShort = userPreferences?.branch?.short_name || '';
-  const branchCode = userPreferences?.branch?.branch_code || '';
-  const semesterObj = userPreferences?.semester || {};
-  const semLabel = semesterObj?.number
-    ? `Semester ${semesterObj.number}`
-    : (semesterObj?.semester_code || '');
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 60, 100],
+    outputRange: [1, 0.8, 0],
+    extrapolate: 'clamp',
+  });
+  
+  const searchBarTranslateY = scrollY.interpolate({
+    inputRange: [0, 80],
+    outputRange: [0, -30], // Should match header's scroll up distance or be slightly less
+    extrapolate: 'clamp',
+  });
 
-  // Fetch subjects when semester changes
+
+  const userName = currentUser?.name || userPreferences?.userId || 'User';
+  const branch = userPreferences?.branch?.name || '';
+  const semesterObj = userPreferences?.semester || {};
+  const semLabel = semesterObj?.number ? `Sem ${semesterObj.number}` : (semesterObj?.semester_code || '');
+
   useEffect(() => {
-    const fetch = async () => {
+    const fetchInitialData = async () => {
       if (semesterObj && semesterObj._id) {
-        setLoadingFeed(true);
+        setInitialFeedLoading(true);
         await fetchSubjects(semesterObj._id);
-        setLoadingFeed(false);
+        setInitialFeedLoading(false);
+      } else {
+        setInitialFeedLoading(false); // No semester, nothing to load
       }
     };
-    fetch();
+    fetchInitialData();
   }, [semesterObj?._id, fetchSubjects]);
 
-  // Filter subjects based on search
   useEffect(() => {
     if (!search) {
       setFilteredSubjects(subjects || []);
@@ -70,7 +82,6 @@ export default function HomeScreen() {
     }
   }, [subjects, search]);
 
-  // Card press animation
   const animateCardPress = (id) => {
     if (!animatedScales[id]) {
       animatedScales[id] = new Animated.Value(1);
@@ -81,7 +92,6 @@ export default function HomeScreen() {
     ]).start();
   };
 
-  // Handle subject card press
   const handleSubjectPress = useCallback((subject) => {
     animateCardPress(subject._id);
     setTimeout(() => {
@@ -89,392 +99,344 @@ export default function HomeScreen() {
     }, 150);
   }, [navigation]);
 
-  // Clear search query
   const clearSearch = () => setSearch('');
 
-  return (
-    <View style={styles.screen}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
-
-      {/* Header */}
-      <Animated.View 
-        style={[
-          styles.header, 
-          { 
-            elevation: headerElevation,
-            shadowOpacity: headerElevation.__getValue() / 10,
-            backgroundColor: COLORS.primary, // Use primary as header background
-          }
-        ]}
-      >
-        <View style={styles.headerContent}>
-          <View>
-            <Text style={styles.logo} accessibilityRole="header">PYQDECK</Text>
-            <Text style={styles.subtitleHeader} numberOfLines={1}>
-              {`${branchShort || branchCode || branch}${branchShort && branchShort !== branchCode ? ` (${branchCode})` : ''}`}
-              {semLabel ? ` • ${semLabel}` : ''}
-            </Text>
-          </View>
-          <View style={styles.headerRight}>
-            <TouchableOpacity
-              style={styles.profileIconTouchable}
-              onPress={() => navigation.navigate('Profile')}
-              accessibilityLabel="Go to profile"
-              accessibilityHint="Navigates to user profile"
-              activeOpacity={0.7}
-            >
-              <MaterialCommunityIcons name="account-circle" size={32} color={COLORS.white} />
-            </TouchableOpacity>
-          </View>
+  const renderHeader = () => (
+    <>
+      {/* Header row with greeting on the left and profile on the right */}
+      <Animated.View style={[
+        styles.headerRowContainer,
+        { transform: [{ translateY: headerTranslateY }], opacity: headerOpacity }
+      ]}>
+        <View style={styles.headerRowText}>
+          <Text style={styles.greetingText}>Hello, {userName}!</Text>
+          <Text style={styles.headerSubtitle}>
+            {branch ? `${branch} • ${semLabel}` : 'Select Branch/Semester'}
+          </Text>
         </View>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Profile')}
+          accessibilityLabel="Go to profile"
+          style={styles.headerProfileBtn}
+        >
+          <MaterialCommunityIcons name="account-circle-outline" size={32} color={COLORS.primary} />
+        </TouchableOpacity>
       </Animated.View>
 
-      {/* Main Content */}
-      {loadingFeed || (loading && subjects.length === 0) ? (
-        <View style={styles.centeredFeedback}>
-          <ActivityIndicator size="large" color={COLORS.primary} style={{ marginBottom: SPACING }} />
-          <Text style={styles.loadingText}>Loading your subjects...</Text>
-        </View>
-      ) : error ? (
-        <View style={styles.centeredFeedback}>
-          <MaterialCommunityIcons name="alert-circle-outline" size={40} color={COLORS.error} style={{ marginBottom: SPACING }} />
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={() => fetchSubjects(semesterObj._id)} style={styles.retryButton}>
-            <Text style={styles.retryButtonText}>Tap to retry</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <>
-          {/* Search Bar */}
-          <View style={styles.searchSection}>
-            <View style={[
-              styles.searchBarContainer,
-              searchFocused && styles.searchBarFocused
-            ]}>
-              <MaterialCommunityIcons name="magnify" size={20} color={searchFocused ? COLORS.primary : COLORS.textSubtitle} style={styles.searchIcon} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder={subjects?.length ? `Search ${subjects.length} subjects...` : 'Search subjects...'}
-                placeholderTextColor={COLORS.placeholderGrey}
-                value={search}
-                onChangeText={setSearch}
-                blurOnSubmit={false}
-                selectionColor={COLORS.primary}
-                autoCorrect={false}
-                autoCapitalize="none"
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-                underlineColorAndroid="transparent"
-              />
-              {search.length > 0 && (
-                <TouchableOpacity
-                  onPress={clearSearch}
-                  style={styles.clearSearchButton}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel="Clear search"
-                  accessibilityHint="Clears the search field"
-                >
-                  <View style={styles.clearSearchHitbox}>
-                    <MaterialCommunityIcons name="close-circle" size={24} color={COLORS.primary} />
-                  </View>
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-
-          {/* Subject Count */}
-          {subjects && subjects.length > 0 && (
-            <View style={styles.subjectCountContainer}>
-              <Text style={styles.subjectCountText}>
-                {filteredSubjects.length} {filteredSubjects.length === 1 ? 'subject' : 'subjects'} {search ? 'found' : 'available'}
-              </Text>
-            </View>
-          )}
-
-          {/* Subject List */}
-          <Animated.FlatList
-            keyboardShouldPersistTaps="always"
-            keyboardDismissMode="on-drag"
-            data={filteredSubjects}
-            keyExtractor={(item) => item._id}
-            contentContainerStyle={styles.listContentContainer}
-            showsVerticalScrollIndicator={false}
-            style={styles.listBackgroundAccent}
-            onScroll={Animated.event(
-              [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-              { useNativeDriver: false }
-            )}
-            scrollEventThrottle={16}
-            renderItem={({ item }) => {
-              if (!animatedScales[item._id]) {
-                animatedScales[item._id] = new Animated.Value(1);
-              }
-
-              return (
-                <Animated.View 
-                  style={[
-                    styles.subjectCardWrapper, 
-                    { 
-                      transform: [{ scale: animatedScales[item._id] }]
-                    }
-                  ]}
-                >
-                  <TouchableOpacity
-                    style={styles.subjectCardTouchable}
-                    onPress={() => handleSubjectPress(item)}
-                    activeOpacity={0.93}
-                    accessibilityLabel={`View subject: ${item.name}`}
-                    accessibilityHint="Navigates to subject details"
-                  >
-                    <View style={styles.subjectCard}>
-                      <View style={styles.cardHeader}>
-                        <Text style={styles.subjectCode}>{item.code}</Text>
-                        <MaterialCommunityIcons 
-                          name="chevron-right" 
-                          size={24}
-                          color={'rgba(68,80,105,0.54)'}
-                          style={styles.cardChevron} 
-                          accessibilityLabel="Go to subject"
-                        />
-                      </View>
-
-                      <Text numberOfLines={2} style={styles.subjectTitle}>{item.name}</Text>
-
-                      <View style={styles.cardFooter}>
-                        <Text style={styles.subjectFooterText} numberOfLines={1}>
-                          {`${branchShort || branchCode || branch}${semesterObj.semester_code ? ` • ${semesterObj.semester_code}` : semLabel ? ` • ${semLabel}` : ''}`}
-                        </Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                </Animated.View>
-              );
-            }}
-            ListEmptyComponent={
-              <View style={styles.centeredFeedback}>
-                <MaterialCommunityIcons name="book-search-outline" size={56} color={COLORS.mediumGray} style={{ marginBottom: SPACING }} />
-                <Text style={styles.emptyStateTitle}>
-                  {search ? `No results found` : `No subjects available`}
-                </Text>
-                <Text style={styles.emptyStateText}>
-                  {search ? `Try a different search term` : `No subjects found for the current semester`}
-                </Text>
-              </View>
-            }
+      <Animated.View style={[
+        styles.searchSection,
+        { transform: [{ translateY: searchBarTranslateY }] }
+      ]}>
+        <View style={[styles.searchBarContainer, searchFocused && styles.searchBarFocused]}>
+          <MaterialCommunityIcons name="magnify" size={22} color={searchFocused ? COLORS.primary : COLORS.textSecondary} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search subjects or codes..."
+            placeholderTextColor={COLORS.placeholderGrey}
+            value={search}
+            onChangeText={setSearch}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            selectionColor={COLORS.primary}
           />
-        </>
+          {search.length > 0 && (
+            <TouchableOpacity onPress={clearSearch} style={styles.clearSearchButton}>
+              <MaterialCommunityIcons name="close-circle" size={20} color={COLORS.mediumGray} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </Animated.View>
+      {(!initialFeedLoading && !loading && subjects?.length > 0) && (
+         <Text style={styles.listHeaderTitle}>Your Subjects</Text>
       )}
-    </View>
+    </>
+  );
+
+  if (initialFeedLoading || (loading && (!subjects || subjects.length === 0))) {
+    return (
+      <View style={styles.centeredFeedback}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Loading your subjects...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.centeredFeedback}>
+        <MaterialCommunityIcons name="alert-circle-outline" size={48} color={COLORS.error} style={{ marginBottom: SPACING / 2 }} />
+        <Text style={styles.errorText}>Failed to load subjects.</Text>
+        <Text style={styles.errorDetailText}>{error}</Text>
+        <TouchableOpacity onPress={() => fetchSubjects(semesterObj._id)} style={styles.retryButton}>
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <Pressable style={styles.screen} onPress={Keyboard.dismiss} accessible={false}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      
+      {/* Header row with greeting on the left and profile on the right */}
+      <View style={styles.headerRowContainer}>
+        <View style={styles.headerRowText}>
+          <Text style={styles.greetingText}>Hello, {userName}!</Text>
+          <Text style={styles.headerSubtitle}>
+            {branch ? `${branch} • ${semLabel}` : 'Select Branch/Semester'}
+          </Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Profile')}
+          accessibilityLabel="Go to profile"
+          style={styles.headerProfileBtn}
+        >
+          <MaterialCommunityIcons name="account-circle-outline" size={32} color={COLORS.primary} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.searchSection}>
+        <View style={[styles.searchBarContainer, searchFocused && styles.searchBarFocused]}>
+          <MaterialCommunityIcons name="magnify" size={22} color={searchFocused ? COLORS.primary : COLORS.textSecondary} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search subjects or codes..."
+            placeholderTextColor={COLORS.placeholderGrey}
+            value={search}
+            onChangeText={setSearch}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            selectionColor={COLORS.primary}
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={clearSearch} style={styles.clearSearchButton}>
+              <MaterialCommunityIcons name="close-circle" size={20} color={COLORS.mediumGray} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+      {(!initialFeedLoading && !loading && subjects?.length > 0) && (
+         <Text style={styles.listHeaderTitle}>Your Subjects</Text>
+      )}
+
+      <FlatList
+        data={filteredSubjects}
+        keyExtractor={(item) => item._id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContentContainer}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false } // set to false because of layout animations potentially
+        )}
+        scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
+        renderItem={({ item }) => {
+          if (!animatedScales[item._id]) {
+            animatedScales[item._id] = new Animated.Value(1);
+          }
+          return (
+            <Animated.View style={{ transform: [{ scale: animatedScales[item._id] }] }}>
+              <TouchableOpacity
+                style={styles.subjectCard}
+                onPress={() => handleSubjectPress(item)}
+                activeOpacity={0.85}
+              >
+                <View style={styles.cardIconContainer}>
+                  <MaterialCommunityIcons name="book-open-page-variant-outline" size={28} color={COLORS.primary} />
+                </View>
+                <View style={styles.cardTextContainer}>
+                  <Text style={styles.subjectTitle} numberOfLines={2}>{item.name}</Text>
+                  <Text style={styles.subjectCode}>Code: {item.code}</Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={26} color={COLORS.mediumGray} />
+              </TouchableOpacity>
+            </Animated.View>
+          );
+        }}
+        ListEmptyComponent={
+          <View style={styles.centeredFeedback}>
+            <MaterialCommunityIcons name="book-search-outline" size={60} color={COLORS.mediumGray} style={{ marginBottom: SPACING }} />
+            <Text style={styles.emptyStateTitle}>
+              {search ? `No results for "${search}"` : `No Subjects Found`}
+            </Text>
+            <Text style={styles.emptyStateText}>
+              {search ? `Try a different search term or check your spelling.` : `It seems there are no subjects for your selected semester, or try personalizing your preferences.`}
+            </Text>
+          </View>
+        }
+      />
+      {/* Removed absolutely positioned floating profile button in favor of header integration */}
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.lightGray,
+    backgroundColor: COLORS.background, // Changed to white for a cleaner look
   },
-  header: {
-    paddingBottom: SPACING * 0.75,
-    backgroundColor: COLORS.primary,
-    borderBottomWidth: 0, // Remove border—rely on shadow for separation
-    borderBottomColor: COLORS.primaryDark,
-    shadowColor: COLORS.shadowColor,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    shadowOpacity: 0.18,
-    zIndex: 10,
-  },
-  headerContent: {
+  // Header now has row for greeting/profile
+  headerRowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING,
-    paddingVertical: SPACING * 0.5,
+    paddingTop: Platform.OS === 'ios' ? SPACING * 2.5 : SPACING * 1.5,
+    paddingBottom: SPACING * 0.5,
+    backgroundColor: COLORS.background,
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  headerRowText: {
+    flex: 1,
   },
-  logo: {
-    fontSize: 30,
+  headerProfileBtn: {
+    marginLeft: 12,
+    padding: 4,
+    borderRadius: 50,
+    backgroundColor: COLORS.white,
+    shadowColor: COLORS.shadowColor,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  greetingText: {
+    fontSize: 26,
     fontWeight: 'bold',
-    color: COLORS.white,
-    letterSpacing: 2,
-    textShadowColor: 'rgba(44,44,44,0.16)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    color: COLORS.textTitle,
   },
-  subtitleHeader: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.84)',
-    fontWeight: '600',
-    marginTop: 2,
-    maxWidth: width * 0.7,
-  },
-  profileIconTouchable: {
-    padding: 8, // Minimum 44x44 touch target (icon is 32 so 6 px pad, bump for safety)
-    borderRadius: 22,
+  headerSubtitle: {
+    fontSize: 15,
+    color: COLORS.textSubtitle,
+    marginTop: 4,
   },
   searchSection: {
-    backgroundColor: COLORS.white,
     paddingHorizontal: SPACING,
-    paddingTop: SPACING * 0.5,
-    paddingBottom: SPACING,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightBorder,
+    paddingVertical: SPACING,
+    backgroundColor: COLORS.background, // Keep search on white bg
+    zIndex: 1, // Ensure search is above scrolling content if header shrinks completely
   },
   searchBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.lightGray,
+    backgroundColor: COLORS.accentBackground, // Lighter background for search
     borderRadius: 12,
     paddingHorizontal: SPACING,
-    paddingVertical: SPACING * 0.4,
-    borderWidth: 1,
-    borderColor: COLORS.transparent,
   },
   searchBarFocused: {
     borderColor: COLORS.primary,
-    backgroundColor: COLORS.inputBackground,
+    borderWidth: 1.5,
+    backgroundColor: COLORS.white, // Change to white on focus
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 10,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: COLORS.text,
-    paddingVertical: 6,
-    backgroundColor: 'transparent',
+    color: COLORS.textTitle,
+    paddingVertical: Platform.OS === 'ios' ? 14 : 10,
   },
   clearSearchButton: {
-    marginLeft: 2,
+    padding: 8,
   },
-  clearSearchHitbox: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 22,
-  },
-  subjectCountContainer: {
+  listHeaderTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.textTitle,
     paddingHorizontal: SPACING,
-    paddingTop: SPACING * 0.2,
-    paddingBottom: SPACING * 0.5,
-    alignItems: 'flex-start',
-    backgroundColor: COLORS.white,
-  },
-  subjectCountText: {
-    fontSize: 14,
-    color: COLORS.textSubtitle,
-    fontWeight: '600',
-  },
-  listBackgroundAccent: {
-    backgroundColor: COLORS.accentBackground,
-    flex: 1,
+    marginTop: SPACING,
+    marginBottom: SPACING * 0.75,
   },
   listContentContainer: {
-    paddingBottom: SPACING * 2,
     paddingHorizontal: SPACING,
-    paddingTop: SPACING,
-  },
-  subjectCardWrapper: {
-    marginBottom: SPACING,
-  },
-  subjectCardTouchable: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    minHeight: 48,
+    paddingBottom: SPACING * 5, // More space at bottom
   },
   subjectCard: {
-    backgroundColor: COLORS.cardBackgroundLight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: SPACING,
+    marginBottom: SPACING,
     borderWidth: 1,
-    borderColor: COLORS.accent,
+    borderColor: COLORS.lightBorder, // Subtle border
     shadowColor: COLORS.shadowColor,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.14,
-    shadowRadius: 4,
-    elevation: 2,
-    minHeight: 76,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  cardIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: COLORS.accentBackground, // Light purple accent
     justifyContent: 'center',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 3,
+    marginRight: SPACING,
   },
-  subjectCode: {
-    fontWeight: 'bold',
-    fontSize: 15,
-    color: COLORS.primary,
-    letterSpacing: 1,
-    opacity: 0.82,
-  },
-  cardChevron: {
-    marginLeft: 8,
+  cardTextContainer: {
+    flex: 1,
+    marginRight: SPACING / 2,
   },
   subjectTitle: {
-    fontSize: 19,
-    fontWeight: '800',
+    fontSize: 17,
+    fontWeight: '600', // Semi-bold for better readability
     color: COLORS.textTitle,
     marginBottom: 4,
-    marginTop: 2,
-    letterSpacing: 0.04,
   },
-  cardFooter: {
-    marginTop: 8,
-  },
-  subjectFooterText: {
+  subjectCode: {
     fontSize: 13,
     color: COLORS.textSubtitle,
     fontWeight: '500',
-    opacity: 0.70,
   },
   centeredFeedback: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 48,
-    paddingHorizontal: SPACING * 2,
+    padding: SPACING * 2,
+    marginTop: height * 0.15, // Push down a bit
   },
   loadingText: {
     fontSize: 16,
-    color: COLORS.primary,
-    marginTop: 4,
+    color: COLORS.textBody,
+    marginTop: SPACING,
   },
   errorText: {
-    fontSize: 15,
+    fontSize: 18,
+    fontWeight: '600',
     color: COLORS.error,
-    marginBottom: 6,
     textAlign: 'center',
+    marginBottom: SPACING / 2,
+  },
+  errorDetailText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: SPACING * 1.5,
   },
   retryButton: {
-    marginTop: 5,
     backgroundColor: COLORS.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: 6,
+    paddingHorizontal: SPACING * 2,
+    paddingVertical: SPACING * 0.75,
+    borderRadius: 8,
   },
   retryButtonText: {
     color: COLORS.white,
     fontWeight: '600',
-    fontSize: 15,
-    textAlign: 'center',
+    fontSize: 16,
   },
   emptyStateTitle: {
-    fontSize: 18,
-    color: COLORS.mediumGray,
-    fontWeight: '500',
-    marginBottom: 3,
+    fontSize: 20,
+    fontWeight: '600',
+    color: COLORS.textTitle,
     textAlign: 'center',
+    marginBottom: SPACING / 2,
   },
   emptyStateText: {
     fontSize: 15,
-    color: COLORS.textSubtitle,
+    color: COLORS.textSecondary,
     textAlign: 'center',
+    lineHeight: 22,
   },
 });

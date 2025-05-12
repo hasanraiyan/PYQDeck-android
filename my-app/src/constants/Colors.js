@@ -36,3 +36,4 @@ export const COLORS = {
   transparent: 'transparent',
 };
 
+// --- THEME PALETTES
