@@ -5,7 +5,7 @@ import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
-import AuthLandingScreen from '../screens/AuthLandingScreen'; // NEW
+import AuthLandingScreen from '../screens/auth/AuthLandingScreen'; // NEW
 
 const Stack = createStackNavigator();
 

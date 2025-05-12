@@ -1,15 +1,15 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import HomeScreen from '../screens/HomeScreen';
+import HomeScreen from '../screens/Home/HomeScreen';
 import LibraryScreen from '../screens/LibraryScreen';
 import SavedScreen from '../screens/SavedScreen';
 import ProfileScreen from '../screens/ProfileScreen';
-import SubjectDetailScreen from '../screens/SubjectDetailScreen';
+import SubjectDetailScreen from '../screens/Home/SubjectDetailScreen';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import BrowseQuestionsScreen from '../screens/BrowseQuestionsScreen';
+import BrowseQuestionsScreen from '../screens/Home/BrowseQuestionsScreen';
 import CustomTabBar from '../components/CustomTabBar';
-import QuestionsListScreen from '../screens/QuestionsListScreen';
+import QuestionsListScreen from '../screens/Home/QuestionsListScreen';
 
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();

@@ -2,8 +2,8 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ActivityIndicator, Dimensions, StatusBar, Animated, Platform,
 } from 'react-native';
-import { useApp } from '../context/AppContext';
-import { COLORS } from '../constants/Colors'; // Using the original full COLORS palette
+import { useApp } from '../../context/AppContext';
+import { COLORS } from '../../constants/Colors'; // Using the original full COLORS palette
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 

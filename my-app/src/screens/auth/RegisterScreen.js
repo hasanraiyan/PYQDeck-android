@@ -12,7 +12,8 @@ import {
   Alert,
   Dimensions,
   Image,
-  Animated
+  Animated,
+  StatusBar
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
@@ -111,6 +112,7 @@ const RegisterScreen = ({ navigation }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} animated />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.formContainer}>
           {/* App Logo in circular background */}

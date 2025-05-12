@@ -5,8 +5,8 @@ import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Dimensions,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useApp } from '../context/AppContext';
-import { COLORS } from '../constants/Colors';
+import { useApp } from '../../context/AppContext';
+import { COLORS } from '../../constants/Colors';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');

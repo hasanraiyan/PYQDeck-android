@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 import { useNavigation } from '@react-navigation/native';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../../context/AppContext';
 import { Easing } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -61,21 +61,21 @@ export default function OnboardingScreen() {
             key: '2',
             title: 'Track Your Progress',
             description:
-              'Keep track of your completed questions and measure your overall learning progress through visual stats and performance charts.',
+                'Monitor completed questions and measure your learning through visual stats and performance charts.',
             image: { uri: getPollinationsImageUrl("Engineering student tracking completed questions and progress with charts") },
             icon: (props) => <Ionicons name="stats-chart" {...props} />,
-            actionHint: 'Mark questions as completed to see your progress over time',
-          },
-          {
+            actionHint: 'Mark questions as completed to track your progress over time',
+        },
+        {
             key: '3',
             title: 'Personalized Learning',
             description:
-              'Receive custom-tailored recommendations that adapt to your study habits, helping you focus on areas that need improvement for optimal results.',
+                'Get tailored recommendations that adapt to your study habits, focusing on areas that need improvement.',
             image: { uri: getPollinationsImageUrl("Engineering student receiving smart recommendations based on learning patterns and performance") },
             icon: (props) => <MaterialCommunityIcons name="target" {...props} />,
-            actionHint: 'Check your learning patterns for personalized tips and recommendations',
-          }
-          
+            actionHint: 'Check your patterns for personalized tips and suggestions',
+        }
+
     ];
 
     const navigation = useNavigation();
@@ -188,7 +188,7 @@ export default function OnboardingScreen() {
                             <View style={styles.iconContainer}>
                                 <View style={styles.iconBg}>
                                     <Image
-                                        source={require('../../assets/app-logo.png')}
+                                        source={require('../../../assets/app-logo.png')}
                                         style={styles.logoIconInCircle}
                                         accessibilityLabel="App Logo"
                                     />
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
         height: width * 0.92 * 1.05,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 10,
+        marginBottom: -20,
     },
     imageLarge: {
         width: '100%',

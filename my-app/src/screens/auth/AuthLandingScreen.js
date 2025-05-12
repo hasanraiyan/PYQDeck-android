@@ -8,9 +8,10 @@ import {
   SafeAreaView,
   Dimensions,
   Platform,
+  StatusBar
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { COLORS } from '../constants/Colors';
+import { COLORS } from '../../constants/Colors';
 
 const { width } = Dimensions.get('window');
 
@@ -28,12 +29,13 @@ export default function AuthLandingScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} animated />
       <View style={styles.container}>
         {/* Logo and Title Block */}
         <View style={styles.topSection}>
           <View style={styles.logoBgLanding}>
             <Image
-              source={require('../../assets/app-logo.png')}
+              source={require('../../../assets/app-logo.png')}
               style={styles.logoInCircleLanding}
               resizeMode="contain"
               accessibilityLabel="PYQDeck logo"

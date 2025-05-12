@@ -12,6 +12,7 @@ import {
   Alert,
   Dimensions,
   Image,
+  StatusBar
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 
@@ -62,6 +63,8 @@ const ForgotPasswordScreen = ({ navigation }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} animated />
+
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.formContainer}>
           {/* App Logo in circular background */}
