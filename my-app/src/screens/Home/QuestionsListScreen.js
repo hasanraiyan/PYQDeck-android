@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, FlatList
+  View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, FlatList, Platform
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useApp } from '../../context/AppContext';
@@ -23,15 +23,26 @@ export default function QuestionsListScreen() {
     const fetchQ = async () => {
       setLoading(true);
       let filters = {};
-      if (year) filters.year = year;
-      if (module && module.module_code) filters.chapter = module.module_code;
+      if (year) {
+        filters.year = year;
+      }
+      if (module && module.name) { // API expects chapter name
+        filters.chapter = module.name;
+      } else if (module && module.module_code && !module.name) {
+        filters.chapter = module.module_code; 
+      }
       const result = await fetchQuestions(subjectId, filters);
       setQuestions(result?.questions || []);
       setLoading(false);
     };
-    fetchQ();
-    // eslint-disable-next-line
-  }, [subjectId, year, module && module.module_code]);
+    if (subjectId) {
+      fetchQ();
+    } else {
+      setLoading(false);
+      console.warn("QuestionsListScreen: subjectId is missing.");
+      // Optionally, show an error message to the user or navigate back
+    }
+  }, [subjectId, year, module, fetchQuestions]);
 
   // Title logic
   let title = subject?.name || 'Questions';
@@ -60,31 +71,28 @@ export default function QuestionsListScreen() {
         ListEmptyComponent={
           loading
             ? <ActivityIndicator color={COLORS.primary} size="large" style={{ marginTop: 80 }} />
-            : <Text style={{ textAlign: 'center', color: '#bbb', marginTop: 55 }}>
-                No questions found for selected {year ? "year" : "module"}.
-              </Text>
+            : <View style={styles.emptyListContainer}>
+                <MaterialCommunityIcons name="magnify-scan" size={60} color={COLORS.textSecondary} />
+                <Text style={styles.emptyListText}>
+                  No questions found for the selected criteria.
+                </Text>
+              </View>
         }
         renderItem={({ item }) => (
           <View style={styles.questionCard}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <Text style={styles.questionNo}>{item.short_code || item.question_no || item.q_code || 'Q'}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={styles.marks}>{item.marks ? `${item.marks} Marks` : ''}</Text>
-                {item.completed && <MaterialCommunityIcons name="check-circle" size={22} color="#8f81e6" style={{ marginLeft: 8 }} />}
+            <View style={styles.questionHeader}>
+              <Text style={styles.questionNo}>{item.qNumber || item.question_code_identifier || 'Q'}</Text>
+              <View style={styles.questionMetaRight}>
+                {item.marks && <Text style={styles.marks}>{item.marks} Marks</Text>}
+                {/* Assuming completed status might come with question data in future */}
+                {/* {item.completed && <MaterialCommunityIcons name="check-circle" size={20} color={COLORS.primary} style={{ marginLeft: 8 }} />} */}
               </View>
             </View>
-            <Text style={styles.questionText} numberOfLines={5}>{item.text || item.question || ''}</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 9 }}>
-              {/* Module/Chapter info */}
-              {item.module && (
-                <Text style={styles.metaText}>
-                  {item.module.name || item.module.title || (module?.name ? `Module: ${module.name}` : '')}
-                </Text>
-              )}
-              {/* Year */}
-              {item.year && <Text style={[styles.metaText, { marginLeft: 15 }]}>Year: {item.year}</Text>}
-              {/* Question type */}
-              {item.type && <Text style={[styles.metaText, { marginLeft: 15 }]}>{item.type}</Text>}
+            <Text style={styles.questionText}>{item.text || 'No question text available.'}</Text>
+            <View style={styles.metaTagsContainer}>
+              {item.chapter_module_name && <Text style={styles.metaTextTag}>Module: {item.chapter_module_name}</Text>}
+              {item.year && <Text style={styles.metaTextTag}>Year: {item.year}</Text>}
+              {item.type && <Text style={styles.metaTextTag}>Type: {item.type}</Text>}
             </View>
           </View>
         )}
@@ -97,60 +105,89 @@ const styles = StyleSheet.create({
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#8576E3',
-    paddingTop: 44,
-    paddingBottom: 22,
-    paddingHorizontal: 12,
-    elevation: 5,
-    shadowColor: '#bbb4f8',
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+    backgroundColor: COLORS.primaryDark,
+    paddingBottom: 15,
+    paddingHorizontal: 15,
+    elevation: 4,
   },
   headerBackBtn: {
+    padding: 5,
     marginRight: 10,
-    padding: 2,
   },
   headerTitle: {
-    color: '#fff',
+    color: COLORS.white,
     fontSize: 20,
     flex: 1,
     fontWeight: 'bold',
-    paddingLeft: 4,
-    letterSpacing: 0.6,
+  },
+  emptyListContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 90,
+    paddingHorizontal: 20,
+  },
+  emptyListText: {
+    textAlign: 'center',
+    color: COLORS.textSecondary,
+    fontSize: 16,
+    marginTop: 15,
+    lineHeight: 22,
   },
   questionCard: {
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 18,
-    marginBottom: 17,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 15,
     elevation: 2,
-    shadowColor: '#EEEBF5',
-    shadowOpacity: 0.07,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 1 }
+    shadowColor: COLORS.shadowColor,
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 }
+  },
+  questionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
   },
   questionNo: {
-    color: '#6d3be0',
-    fontWeight: '700',
-    fontSize: 15,
-    marginBottom: 3,
+    color: COLORS.primary,
+    fontWeight: 'bold',
+    fontSize: 16,
   },
-  questionText: {
-    color: '#26283c',
-    fontSize: 15.5,
-    fontWeight: '500',
-    marginVertical: 5,
-    lineHeight: 22
+  questionMetaRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   marks: {
-    color: '#4F5590',
-    fontWeight: '700',
-    fontSize: 15,
+    color: COLORS.textSubtitle,
+    fontWeight: '600',
+    fontSize: 14,
   },
-  metaText: {
-    color: '#888baa',
-    fontSize: 13.5,
-    marginTop: 1,
-    fontWeight: '600'
+  questionText: {
+    color: COLORS.textBody,
+    fontSize: 15.5,
+    lineHeight: 23,
+    marginBottom: 10,
+  },
+  metaTagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.lightBorder,
+    paddingTop: 8,
+  },
+  metaTextTag: {
+    backgroundColor: COLORS.accentBackground,
+    color: COLORS.primaryDark,
+    fontSize: 12,
+    fontWeight: '600',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginRight: 8,
+    marginBottom: 6,
   },
 });
