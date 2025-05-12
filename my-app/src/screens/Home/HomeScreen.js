@@ -152,55 +152,112 @@ export default function HomeScreen() {
     </>
   );
 
-if (initialFeedLoading || (loading && (!subjects || subjects.length === 0))) {
-    // Skeleton loader instead of spinner
-    const skeletonItems = Array.from({ length: 6 });
+// --- SHIMMER HOOKS SETUP, always at top level ---
+const shimmerAnim = useRef(new Animated.Value(0)).current;
+const shimmerWidth = 110; // width of shimmer effect
+const skeletonCardWidth = CARD_WIDTH - SPACING;
 
-    return (
-      <Pressable style={styles.screen} onPress={Keyboard.dismiss} accessible={false}>
-        <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryDark} />
-        <View style={styles.headerRowContainer}>
-          <View style={styles.headerRowText}>
-            <Text style={styles.greetingText}>Hello, {userName}!</Text>
-            <Text style={styles.headerSubtitle}>
-              {branch ? `${branch} • ${semLabel}` : 'Select Branch/Semester'}
-            </Text>
-          </View>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Profile')}
-            accessibilityLabel="Go to profile"
-            style={styles.headerProfileBtn}
-          >
-            <MaterialCommunityIcons name="account-circle-outline" size={32} color={COLORS.primary} />
-          </TouchableOpacity>
+useEffect(() => {
+  if (initialFeedLoading || (loading && (!subjects || subjects.length === 0))) {
+    shimmerAnim.setValue(0);
+    const loop = Animated.loop(
+      Animated.timing(shimmerAnim, {
+        toValue: 1,
+        duration: 1100,
+        useNativeDriver: true,
+      })
+    );
+    loop.start();
+    return () => shimmerAnim.stopAnimation();
+  }
+}, [shimmerAnim, initialFeedLoading, loading, subjects]);
+
+if (initialFeedLoading || (loading && (!subjects || subjects.length === 0))) {
+  // Skeleton loader with shimmer animation
+  const skeletonItems = Array.from({ length: 6 });
+
+  return (
+    <Pressable style={styles.screen} onPress={Keyboard.dismiss} accessible={false}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryDark} />
+      <View style={styles.headerRowContainer}>
+        <View style={styles.headerRowText}>
+          <Text style={styles.greetingText}>Hello, {userName}!</Text>
+          <Text style={styles.headerSubtitle}>
+            {branch ? `${branch} • ${semLabel}` : 'Select Branch/Semester'}
+          </Text>
         </View>
-        <View style={styles.searchSection}>
-          <View style={[styles.searchBarContainer, searchFocused && styles.searchBarFocused]}>
-            <MaterialCommunityIcons name="magnify" size={22} color={searchFocused ? COLORS.primary : COLORS.textSecondary} style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search subjects or codes..."
-              placeholderTextColor={COLORS.placeholderGrey}
-              value={search}
-              editable={false}
-              selectionColor={COLORS.primary}
-            />
-          </View>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Profile')}
+          accessibilityLabel="Go to profile"
+          style={styles.headerProfileBtn}
+        >
+          <MaterialCommunityIcons name="account-circle-outline" size={32} color={COLORS.primary} />
+        </TouchableOpacity>
+      </View>
+      <View style={styles.searchSection}>
+        <View style={[styles.searchBarContainer, searchFocused && styles.searchBarFocused]}>
+          <MaterialCommunityIcons name="magnify" size={22} color={searchFocused ? COLORS.primary : COLORS.textSecondary} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search subjects or codes..."
+            placeholderTextColor={COLORS.placeholderGrey}
+            value={search}
+            editable={false}
+            selectionColor={COLORS.primary}
+          />
         </View>
-        <View style={styles.skeletonListContainer}>
-          {skeletonItems.map((_, idx) => (
+      </View>
+      <View style={styles.skeletonListContainer}>
+        {skeletonItems.map((_, idx) => (
             <View key={idx} style={styles.skeletonCard}>
-              <View style={styles.skeletonCardIcon} />
+              <View style={styles.skeletonCardIcon}>
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    styles.skeletonShimmer,
+                    {
+                      width: shimmerWidth,
+                      height: '100%',
+                      borderRadius: 25,
+                      transform: [
+                        {
+                          translateX: shimmerAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [-shimmerWidth, 50 + shimmerWidth],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                />
+              </View>
               <View style={styles.skeletonCardContent}>
                 <View style={styles.skeletonLineShort} />
                 <View style={styles.skeletonLineLong} />
               </View>
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.skeletonShimmer,
+                  {
+                    width: shimmerWidth,
+                    transform: [
+                      {
+                        translateX: shimmerAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [-shimmerWidth, skeletonCardWidth + shimmerWidth],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              />
             </View>
-          ))}
-        </View>
-      </Pressable>
-    );
-  }
+        ))}
+      </View>
+    </Pressable>
+  );
+}
 
   if (error) {
     return (
@@ -326,6 +383,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.lightBorder,
     opacity: 0.75,
+    overflow: 'hidden', // allows shimmer to pass outside card
+    position: 'relative',
+  },
+  skeletonShimmer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    height: '100%',
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.60)',
+    opacity: 0.53,
   },
   skeletonCardIcon: {
     width: 50,

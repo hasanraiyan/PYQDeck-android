@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Dimensions, FlatList, Platform, StatusBar
+  View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Dimensions, FlatList, Platform, StatusBar, Animated
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
@@ -183,11 +183,102 @@ export default function SubjectDetailScreen() {
   const branchName = subject?.branch?.name || userPreferences?.branch?.name || 'N/A';
   const semesterNumber = subject?.semester?.number || userPreferences?.semester?.number || 'N/A';
 
+  // --- SHIMMER HOOKS SETUP AT TOP LEVEL ---
+  const shimmerAnim = React.useRef(new Animated.Value(0)).current;
+  const shimmerWidth = 96;
+  const skeletonCardWidth = width - 30 - 10;
+  React.useEffect(() => {
+    if (loading) {
+      shimmerAnim.setValue(0);
+      const loop = Animated.loop(
+        Animated.timing(shimmerAnim, {
+          toValue: 1,
+          duration: 1100,
+          useNativeDriver: true,
+        })
+      );
+      loop.start();
+      return () => shimmerAnim.stopAnimation();
+    }
+  }, [shimmerAnim, loading]);
+
   if (loading) {
+    // Skeleton tab screen for both tabs
+    function SkeletonTabScreen() {
+      const skeletonItems = Array.from({ length: 5 });
+      return (
+        <View style={{ padding: 15 }}>
+          {skeletonItems.map((_, idx) => (
+            <View key={idx} style={styles.skeletonTabCard}>
+              <View style={styles.skeletonTabIcon} />
+              <View style={styles.skeletonTabContent}>
+                <View style={styles.skeletonTabLine} />
+              </View>
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.skeletonShimmer,
+                  {
+                    width: shimmerWidth,
+                    transform: [
+                      {
+                        translateX: shimmerAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [-shimmerWidth, skeletonCardWidth + shimmerWidth],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              />
+            </View>
+          ))}
+        </View>
+      );
+    }
+
     return (
-      <View style={styles.fullScreenLoader}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Loading Subject Details...</Text>
+      <View style={styles.screenContainer}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryDark} />
+        {subject && subject.name ? (
+          <View style={styles.headerBar}>
+            <TouchableOpacity
+              onPress={navigation.goBack}
+              style={styles.headerBackBtn}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 25 }}
+            >
+              <MaterialCommunityIcons name="arrow-left" size={28} color={COLORS.white} />
+            </TouchableOpacity>
+            <View style={styles.headerTitleContainer}>
+                <Text numberOfLines={1} style={styles.headerTitleMain}>
+                {subject.name}
+                </Text>
+                <Text numberOfLines={1} style={styles.headerSubtitle}>
+                {branchName} • Sem {semesterNumber}
+                </Text>
+            </View>
+          </View>
+        ) : (
+          <View style={[styles.headerBar, { marginBottom: 12 }]}>
+            <View style={styles.skeletonCircle} />
+            <View style={styles.skeletonHeaderContent}>
+              <View style={styles.skeletonLineHeaderShort} />
+              <View style={styles.skeletonLineHeaderLong} />
+            </View>
+          </View>
+        )}
+        <Tab.Navigator
+          screenOptions={{
+            tabBarActiveTintColor: COLORS.primary,
+            tabBarInactiveTintColor: COLORS.textSecondary,
+            tabBarLabelStyle: { fontSize: 15, fontWeight: '600', textTransform: 'capitalize' },
+            tabBarIndicatorStyle: { backgroundColor: COLORS.primary, height: 3 },
+            tabBarStyle: { backgroundColor: COLORS.white, elevation: 1, shadowOpacity: 0.05 },
+          }}
+        >
+          <Tab.Screen name="Modules" component={SkeletonTabScreen} />
+          <Tab.Screen name="Years" component={SkeletonTabScreen} />
+        </Tab.Navigator>
       </View>
     );
   }
@@ -346,5 +437,146 @@ const styles = StyleSheet.create({
   emptyTabText: {
       fontSize: 16,
       color: COLORS.textSecondary,
-  }
+  },
+
+  // Skeleton styles for shimmer + cards
+  skeletonCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.accentBackground,
+    marginRight: 15,
+    opacity: 0.7,
+  },
+  skeletonHeaderContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  skeletonLineHeaderShort: {
+    width: 120,
+    height: 15,
+    backgroundColor: COLORS.mediumGray,
+    borderRadius: 9,
+    marginBottom: 7,
+    opacity: 0.7,
+  },
+  skeletonLineHeaderLong: {
+    width: 85,
+    height: 10,
+    backgroundColor: COLORS.lightBorder,
+    borderRadius: 8,
+    opacity: 0.6,
+  },
+  skeletonTabCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    paddingVertical: 18,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    elevation: 1,
+    shadowColor: COLORS.shadowColor,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    position: 'relative',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.lightBorder,
+    opacity: 0.75,
+  },
+  skeletonTabIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: COLORS.accentBackground,
+    marginRight: 15,
+    opacity: 0.7,
+  },
+  skeletonTabContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  skeletonTabLine: {
+    width: '80%',
+    height: 12,
+    backgroundColor: COLORS.mediumGray,
+    borderRadius: 7,
+    opacity: 0.7,
+  },
+  skeletonShimmer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: '100%',
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.60)',
+    opacity: 0.5,
+  },
+
+  // Skeleton tab navigator styles
+  skeletonTabBarOuter: {
+    backgroundColor: COLORS.white,
+    marginHorizontal: 0,
+    marginTop: 0,
+    marginBottom: 0,
+    paddingHorizontal: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightBorder,
+    position: 'relative',
+    zIndex: 1,
+  },
+  skeletonTabBarInner: {
+    flexDirection: 'row',
+    height: 45,
+    alignItems: 'stretch',
+    justifyContent: 'space-between',
+    backgroundColor: 'transparent',
+    paddingHorizontal: 15,
+    position: 'relative',
+    zIndex: 2,
+  },
+  skeletonTabBarItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 0,
+    paddingTop: 0,
+    backgroundColor: 'transparent',
+    height: '100%',
+  },
+  skeletonTabBarItemActive: {
+    // same as base, text color handled by text styles
+  },
+  skeletonTabBarText: {
+    fontSize: 15,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+    opacity: 0.7,
+    textTransform: 'capitalize',
+    letterSpacing: 0.15,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  skeletonTabBarTextActive: {
+    fontSize: 15,
+    color: COLORS.primary,
+    fontWeight: '600',
+    opacity: 1,
+    textTransform: 'capitalize',
+    letterSpacing: 0.15,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  skeletonTabBarIndicator: {
+    position: 'absolute',
+    left: 15,
+    bottom: 0,
+    width: '50%',
+    height: 3,
+    backgroundColor: COLORS.primary,
+    borderRadius: 2,
+    zIndex: 3,
+  },
 });
