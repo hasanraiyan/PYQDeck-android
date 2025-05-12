@@ -1,100 +1,125 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+} from 'react-native';
 import { useApp } from '../../context/AppContext';
 import { useNavigation } from '@react-navigation/native';
 import OnboardingWrapper from '../../components/onboarding/OnboardingWrapper';
 import NextButton from '../../components/onboarding/NextButton';
+import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/Colors';
 
+const { width } = Dimensions.get('window');
+
 const BranchScreen = () => {
-  const { branches, fetchBranches, loading: appContextLoading, error: appContextError, updatePreference, userPreferences } = useApp();
+  const {
+    branches,
+    fetchBranches,
+    loading: appContextLoading,
+    error: appContextError,
+    updatePreference,
+    userPreferences,
+  } = useApp();
   const navigation = useNavigation();
-  // Ensure userPreferences is always an object
-  const safeUserPreferences = userPreferences || {};
-  const [selectedBranch, setSelectedBranch] = useState(safeUserPreferences.branch || null);
+  const [selectedBranch, setSelectedBranch] = useState(userPreferences?.branch || null);
 
   useEffect(() => {
     fetchBranches();
   }, [fetchBranches]);
 
-  const handleSelectBranch = (branch) => {
-    setSelectedBranch(branch);
-  };
+  const handleSelectBranch = (branch) => setSelectedBranch(branch);
 
   const handleNext = () => {
     if (!selectedBranch) {
-      Alert.alert("Selection Required", "Please select your branch to continue.");
+      Alert.alert('Selection Required', 'Please select your branch to continue.');
       return;
     }
     updatePreference('branch', selectedBranch);
     navigation.navigate('Semester');
   };
 
-  if (appContextLoading && branches.length === 0) {
+  const renderBranchItem = ({ item }) => {
+    const isSelected = selectedBranch?._id === item._id;
     return (
-      <OnboardingWrapper title="Select Your Branch" subtitle="Loading branches..." disableScroll>
-        <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 20 }}/>
-      </OnboardingWrapper>
+      <Pressable
+        onPress={() => handleSelectBranch(item)}
+        style={[styles.itemContainer, isSelected && styles.selectedItemContainer]}
+        android_ripple={{ color: COLORS.lightBorder }}
+      >
+        <Text
+          style={[styles.itemText, isSelected && styles.selectedItemText]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {item.name}
+        </Text>
+        {isSelected && <MaterialIcons name="check-circle" size={20} color={COLORS.primary} />}
+      </Pressable>
     );
-  }
-
-  if (appContextError) {
-     return (
-      <OnboardingWrapper title="Select Your Branch" subtitle="Choose your field of study." disableScroll>
-        <Text style={styles.errorText}>Error fetching branches: {appContextError}</Text>
-        <TouchableOpacity onPress={fetchBranches} style={styles.retryButton}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
-      </OnboardingWrapper>
-     )
-  }
-
-
-  const renderBranchItem = ({ item }) => (
-    <TouchableOpacity
-      style={[
-        styles.itemContainer,
-        selectedBranch?._id === item._id && styles.selectedItemContainer,
-      ]}
-      onPress={() => handleSelectBranch(item)}
-    >
-      <Text style={[styles.itemText, selectedBranch?._id === item._id && styles.selectedItemText]}>{item.name}</Text>
-    </TouchableOpacity>
-  );
+  };
 
   return (
-    <OnboardingWrapper title="Select Your Branch" subtitle="Choose your field of study to personalize your experience." disableScroll>
-      <FlatList
-        data={branches}
-        renderItem={renderBranchItem}
-        keyExtractor={(item) => item._id}
-        style={styles.list}
-        extraData={selectedBranch}
-      />
-      <NextButton title="Next" onPress={handleNext} disabled={!selectedBranch || appContextLoading} />
+    <OnboardingWrapper
+      title="Select Your Branch"
+      subtitle="Choose your field of study to personalize your experience."
+      disableScroll
+    >
+      {appContextLoading && branches.length === 0 ? (
+        <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
+      ) : appContextError ? (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Error fetching branches. Pull to retry.</Text>
+          <NextButton title="Retry" onPress={fetchBranches} />
+        </View>
+      ) : (
+        <View style={styles.listWrapper}>
+          <FlatList
+            data={branches}
+            renderItem={renderBranchItem}
+            keyExtractor={(item) => item._id}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          />
+          <NextButton
+            title="Next"
+            onPress={handleNext}
+            disabled={!selectedBranch}
+            containerStyle={styles.nextButton}
+          />
+        </View>
+      )}
     </OnboardingWrapper>
   );
 };
 
 const styles = StyleSheet.create({
-  list: {
-    width: '100%',
-    maxHeight: '70%', // Ensure button is visible
-  },
+  loader: { marginTop: 50 },
+  errorContainer: { alignItems: 'center', paddingTop: 30 },
+  errorText: { color: COLORS.error, marginBottom: 10 },
+  listWrapper: { flex: 1, width: '100%' },
+  listContent: { paddingVertical: 20 },
   itemContainer: {
-    paddingVertical: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightBorder,
     backgroundColor: COLORS.white,
-    borderRadius: 8,
-    marginVertical: 5,
-    borderColor: COLORS.border,
+    borderRadius: 6,
+    marginVertical: 6,
     borderWidth: 1,
+    borderColor: COLORS.lightBorder,
   },
   selectedItemContainer: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primaryDark,
+    backgroundColor: COLORS.primaryLight,
+    borderColor: COLORS.primary,
     borderWidth: 2,
   },
   itemText: {
@@ -102,23 +127,15 @@ const styles = StyleSheet.create({
     color: COLORS.textBody,
   },
   selectedItemText: {
-    color: COLORS.white,
-    fontWeight: 'bold',
+    color: COLORS.primaryDark,
+    fontWeight: '600',
   },
-  errorText: {
-    color: COLORS.error,
-    textAlign: 'center',
-    marginBottom: 10,
+  nextButton: {
+    position: 'absolute',
+    bottom: 20,
+    alignSelf: 'center',
+    width: width * 0.9,
   },
-  retryButton: {
-    backgroundColor: COLORS.primary,
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-  },
-  retryButtonText: {
-    color: COLORS.white,
-  }
 });
 
 export default BranchScreen;
