@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const loadOnboardingCompleted = async () => {
       try {
-        const completed = await AsyncStorage.getItem('onboarding_completed');
+        const completed = await AsyncStorage.getItem('onboardingCompleted');
         setOnboardingCompletedState(!!completed && completed === 'true');
       } catch (e) {
         console.error('[AuthContext] Failed to load onboarding_completed', e);
@@ -36,10 +36,10 @@ export const AuthProvider = ({ children }) => {
   // Call this to set onboarding as completed (and persist)
   const setOnboardingCompleted = async () => {
     try {
-      await AsyncStorage.setItem('onboarding_completed', 'true');
+      await AsyncStorage.setItem('onboardingCompleted', 'true');
       setOnboardingCompletedState(true);
     } catch (e) {
-      console.error('[AuthContext] Failed to save onboarding_completed', e);
+      console.error('[AuthContext] Failed to save onboardingCompleted', e);
     }
   };
 
@@ -68,9 +68,9 @@ export const AuthProvider = ({ children }) => {
         originalRequest._retry = true;
         console.log("[AuthContext] Token expired or invalid, attempting refresh.");
         try {
-          // Attempt to refresh token - Placeholder for actual refresh logic if available
-          // For now, if API doesn't support refresh, this will fail and lead to logout.
-          // If you had a refresh endpoint:
+          // === CRITICAL: Token refresh logic is NOT implemented! ===
+          // To support long sessions, implement refresh logic here if your backend supports it.
+          // Example:
           // const { data } = await axios.post(`${API_URL}/auth/refresh-token`, { currentToken: token });
           // if (data.success && data.token) {
           //   await AsyncStorage.setItem('auth_token', data.token);
@@ -78,10 +78,14 @@ export const AuthProvider = ({ children }) => {
           //   authAxios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
           //   originalRequest.headers['Authorization'] = `Bearer ${data.token}`;
           //   return authAxios(originalRequest);
-          // } else {
-          //   await logout(); // Refresh failed
           // }
-          console.warn("[AuthContext] Token refresh mechanism not fully implemented or failed. Logging out.");
+          // If backend does NOT support refresh, user will always be logged out on expiry (suboptimal).
+          if (__DEV__) {
+            // In development, make a visible warning for testers
+            // eslint-disable-next-line no-undef
+            if (typeof alert === 'function') alert('Token refresh failed (NOT implemented)! User will be logged out.');
+          }
+          console.error("[AuthContext] CRITICAL: Token refresh not implemented! User will be logged out.");
           await logout(); // If refresh fails or not implemented, logout
         } catch (refreshError) {
           console.error('[AuthContext] Token refresh error:', refreshError);
@@ -195,8 +199,15 @@ export const AuthProvider = ({ children }) => {
     console.log("[AuthContext] Initiating logout...");
     setOperationLoading(true);
     try {
-      await AsyncStorage.clear(); // Clear ALL AsyncStorage data
-      console.log("[AuthContext] AsyncStorage cleared.");
+      // Clear only relevant keys (auth and onboarding)
+      const keysToRemove = [
+        'auth_token',
+        'onboardingCompleted',
+        'userPreferences',
+        'personalizationCompleted'
+      ];
+      await AsyncStorage.multiRemove(keysToRemove);
+      console.log("[AuthContext] Selected AsyncStorage keys cleared: ", keysToRemove.join(', '));
       setToken(null);
       setCurrentUser(null);
       delete authAxios.defaults.headers.common['Authorization']; // Remove token from axios instance

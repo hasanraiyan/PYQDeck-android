@@ -1,5 +1,5 @@
 // my-app/src/context/AppContext.js
-const DEBUG = true; // Set true to print all backend responses
+const DEBUG = process.env.NODE_ENV !== 'production'; // Set true to print all backend responses in development only
 
 import React, { createContext, useState, useContext, useCallback } from 'react';
 import { useAuth } from './AuthContext'; // Ensure this path is correct
@@ -16,11 +16,13 @@ export const AppProvider = ({ children }) => {
   // ---- EXISTING FEATURE ONBOARDING ----
   const [onboardingCompleted, setOnboardingCompletedState] = useState(false);
   React.useEffect(() => {
+    let isMounted = true;
     const loadOnboarding = async () => {
       const stored = await AsyncStorage.getItem('onboardingCompleted');
-      setOnboardingCompletedState(stored === 'true');
+      if (isMounted) setOnboardingCompletedState(stored === 'true');
     };
     loadOnboarding();
+    return () => { isMounted = false; };
   }, []);
 
   const setOnboardingCompleted = async (value) => {
@@ -44,26 +46,28 @@ export const AppProvider = ({ children }) => {
   const [initialAppLoading, setInitialAppLoading] = useState(true);
 
   React.useEffect(() => {
+    let isMounted = true;
     const loadPersonalizationData = async () => {
-      setInitialAppLoading(true); // Start loading
+      if (isMounted) setInitialAppLoading(true); // Start loading
       try {
         const storedPersonalizationCompleted = await AsyncStorage.getItem('personalizationCompleted');
-        setPersonalizationCompletedState(storedPersonalizationCompleted === 'true');
+        if (isMounted) setPersonalizationCompletedState(storedPersonalizationCompleted === 'true');
 
         const storedUserPrefs = await AsyncStorage.getItem('userPreferences');
         if (storedUserPrefs) {
           const parsedPrefs = JSON.parse(storedUserPrefs);
           // Ensure default values are kept if some prefs are missing from storage
-          setUserPreferences(prev => ({ ...prev, ...parsedPrefs }));
+          if (isMounted) setUserPreferences(prev => ({ ...prev, ...parsedPrefs }));
         }
       } catch (e) {
         console.error("Failed to load personalization data from storage", e);
-         Alert.alert("Loading Error", "Could not load saved preferences.");
+        Alert.alert("Loading Error", "Could not load saved preferences.");
       } finally {
-        setInitialAppLoading(false); // Finish loading
+        if (isMounted) setInitialAppLoading(false); // Finish loading
       }
     };
     loadPersonalizationData();
+    return () => { isMounted = false; };
   }, []);
   // ---- END NEW PERSONALIZATION ONBOARDING ----
 
@@ -325,11 +329,12 @@ export const AppProvider = ({ children }) => {
     setError(null);
     
     // Log current state for debugging
-    console.log("[AppContext] Attempting to save preferences...");
-    console.log("[AppContext] CurrentUser for ID:", currentUser?._id);
-    console.log("[AppContext] UserPreferences state before save (notifications might be stale here):", userPreferences);
-    console.log("[AppContext] finalNotificationsEnabledValue passed to save:", finalNotificationsEnabledValue);
-
+    if (DEBUG) {
+      console.log("[AppContext] Attempting to save preferences...");
+      console.log("[AppContext] CurrentUser for ID:", currentUser?._id);
+      console.log("[AppContext] UserPreferences state before save (notifications might be stale here):", userPreferences);
+      console.log("[AppContext] finalNotificationsEnabledValue passed to save:", finalNotificationsEnabledValue);
+    }
 
     try {
       const finalPrefsToStoreInStorage = {
@@ -347,7 +352,9 @@ export const AppProvider = ({ children }) => {
         notifications: finalNotificationsEnabledValue,
         language: userPreferences.language || 'English',
       };
-      console.log("[AppContext] Object being stored in AsyncStorage:", JSON.stringify(finalPrefsToStoreInStorage, null, 2));
+      if (DEBUG) {
+        console.log("[AppContext] Object being stored in AsyncStorage:", JSON.stringify(finalPrefsToStoreInStorage, null, 2));
+      }
 
       await AsyncStorage.setItem('userPreferences', JSON.stringify(finalPrefsToStoreInStorage));
       await AsyncStorage.setItem('personalizationCompleted', 'true');
@@ -358,7 +365,9 @@ export const AppProvider = ({ children }) => {
       setUserPreferences(finalPrefsToStoreInStorage); 
       setPersonalizationCompletedState(true);
       
-      console.log("[AppContext] Preferences saved successfully. personalizationCompleted set to true.");
+      if (DEBUG) {
+        console.log("[AppContext] Preferences saved successfully. personalizationCompleted set to true.");
+      }
       return true; // Indicate success
     } catch (e) {
       console.error("[AppContext] Failed to save user preferences:", e);
