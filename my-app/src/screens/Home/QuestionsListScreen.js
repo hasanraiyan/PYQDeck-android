@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, FlatList, Platform, StatusBar
+  View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, FlatList, Platform, StatusBar, Image
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useApp } from '../../context/AppContext';
@@ -187,32 +187,17 @@ export default function QuestionsListScreen() {
               mergeStyle={true}
               rules={{
                 image: (node, children, parent, styles) => {
-                  // Destructure key and all other props
+                  // Forward all props to a dedicated component to use hooks safely
                   const { key, src, alt, width, height, ...restProps } = node.attributes || {};
-                  // Sizing logic:
-                  let imageProps = { ...restProps };
-                  if (width && height) {
-                    imageProps.width = Number(width);
-                    imageProps.height = Number(height);
-                  }
-                  // By default, use flex-shrink and maxWidth to avoid overflow
                   return (
-                    <View key={key || src || alt || Math.random()} style={{ alignItems: "center", marginVertical: 7 }}>
-                      <Image
-                        source={{ uri: src }}
-                        alt={alt}
-                        style={{
-                          width: imageProps.width || "100%",
-                          height: imageProps.height || 180,
-                          maxWidth: "100%",
-                          resizeMode: "contain",
-                          borderRadius: 7,
-                          backgroundColor: "#f7f8fa"
-                        }}
-                        accessible={true}
-                        accessibilityLabel={alt}
-                      />
-                    </View>
+                    <MarkdownQuestionImage
+                      key={key || src || alt || Math.random()}
+                      src={src}
+                      alt={alt}
+                      width={width}
+                      height={height}
+                      restProps={restProps}
+                    />
                   );
                 }
               }}
@@ -242,6 +227,93 @@ export default function QuestionsListScreen() {
           </View>
         )}
       />
+    </View>
+  );
+}
+
+// --- MarkdownQuestionImage: safe hooks for skeleton, error, tap-to-zoom ---
+function MarkdownQuestionImage({ src, alt, width, height, restProps }) {
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(false);
+  const [zoomed, setZoomed] = React.useState(false);
+
+  const imageProps = { ...restProps };
+  if (width && height) {
+    imageProps.width = Number(width);
+    imageProps.height = Number(height);
+  }
+  return (
+    <View style={{ alignItems: "center", marginVertical: 7 }}>
+      <TouchableOpacity
+        onPress={() => setZoomed(true)}
+        activeOpacity={0.8}
+        style={{ width: imageProps.width || "100%", borderRadius: 7, backgroundColor: "#f7f8fa" }}
+      >
+        <View style={{ justifyContent: "center", alignItems: "center", minHeight: 100 }}>
+          {loading && !error && (
+            <ActivityIndicator
+              size="small"
+              color="#b2b1df"
+              style={{ position: "absolute", zIndex: 1, top: "50%", left: "50%", marginLeft: -10, marginTop: -10 }}
+            />
+          )}
+          {error && (
+            <MaterialCommunityIcons name="image-broken-variant" color="#ccc" size={40}
+              style={{ marginVertical: 20 }} />
+          )}
+          <Image
+            source={{ uri: src }}
+            alt={alt}
+            style={{
+              width: imageProps.width || 240,
+              height: imageProps.height || 180,
+              maxWidth: "100%",
+              resizeMode: "contain",
+              borderRadius: 7,
+              opacity: loading ? 0.6 : 1,
+              display: error ? "none" : "flex"
+            }}
+            onLoadStart={() => setLoading(true)}
+            onLoadEnd={() => setLoading(false)}
+            onError={() => { setError(true); setLoading(false); }}
+            accessible={true}
+            accessibilityLabel={alt}
+          />
+        </View>
+      </TouchableOpacity>
+      {/* Modal: show zoomed image */}
+      {zoomed && !error && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0,0,0,0.9)",
+            zIndex: 10,
+            justifyContent: "center",
+            alignItems: "center"
+          }}
+        >
+          <TouchableOpacity
+            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+            activeOpacity={1}
+            onPress={() => setZoomed(false)}
+          />
+          <Image
+            source={{ uri: src }}
+            style={{
+              width: "94%",
+              height: "68%",
+              maxWidth: 340,
+              resizeMode: "contain",
+              borderRadius: 8,
+            }}
+          />
+          <Text style={{ color: "#fff", fontSize: 16, marginTop: 18, fontWeight: "500" }}>{alt || "Tap outside to close"}</Text>
+        </View>
+      )}
     </View>
   );
 }
