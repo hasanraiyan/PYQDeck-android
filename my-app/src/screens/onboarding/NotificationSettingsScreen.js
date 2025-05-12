@@ -1,5 +1,6 @@
+// my-app/src/screens/onboarding/NotificationSettingsScreen.js
 import React, { useState } from 'react';
-import { View, Text, Switch, StyleSheet, Alert, Dimensions } from 'react-native';
+import { View, Text, Switch, StyleSheet, Alert, Dimensions, TextInput } from 'react-native'; // Added TextInput
 import { useApp } from '../../context/AppContext';
 import OnboardingWrapper from '../../components/onboarding/OnboardingWrapper';
 import NextButton from '../../components/onboarding/NextButton';
@@ -7,15 +8,28 @@ import { COLORS } from '../../constants/Colors';
 
 const { width } = Dimensions.get('window');
 
-const NotificationSettingsScreen = ({ navigation }) => {
+const NotificationSettingsScreen = () => {
   const { updatePreference, savePersonalizationPreferences, userPreferences, loading } = useApp();
+  // Initialize local state for the switch from the context's userPreferences
   const [notificationsEnabled, setNotificationsEnabled] = useState(userPreferences.notificationsEnabled);
+  // Local state for optional college input
+  const [collegeInput, setCollegeInput] = useState(userPreferences.college || '');
+
 
   const handleFinish = async () => {
-    updatePreference('notificationsEnabled', notificationsEnabled);
-    await savePersonalizationPreferences();
-    console.log('Personalization preferences saved:', userPreferences);
-    // Navigation will be handled by AppNavigator reacting to personalizationCompleted
+    console.log("Finish button pressed. Notifications enabled:", notificationsEnabled, "College:", collegeInput);
+    // Update the college preference in context state before saving all
+    updatePreference('college', collegeInput); 
+    // Pass the current local state of notificationsEnabled to the save function
+    const success = await savePersonalizationPreferences(notificationsEnabled); 
+    
+    if (success) {
+      console.log("Personalization preferences saved successfully.");
+      // Navigation is handled by AppNavigator reacting to personalizationCompleted state change
+    } else {
+      console.log("Failed to save personalization preferences.");
+      // Error alert is likely shown from AppContext, but you can add more specific UI feedback here if needed.
+    }
   };
 
   const toggleSwitch = () => {
@@ -23,8 +37,8 @@ const NotificationSettingsScreen = ({ navigation }) => {
   };
 
   return (
-    <OnboardingWrapper title="Stay Updated" subtitle="Enable notifications for exam alerts and new PYQ pings.">
-      <View style={styles.switchContainer}>
+    <OnboardingWrapper title="Stay Updated" subtitle="Customize your final preferences.">
+      <View style={styles.settingItem}>
         <Text style={styles.label}>Receive Notifications</Text>
         <Switch
           trackColor={{ false: COLORS.inactiveDot, true: COLORS.primaryDark }}
@@ -35,19 +49,18 @@ const NotificationSettingsScreen = ({ navigation }) => {
         />
       </View>
       
-      {/* Optional: College Input - Can be added here or as a separate step if important */}
-      {/* 
       <Text style={styles.labelOptional}>College (Optional)</Text>
       <TextInput
         style={styles.input}
         placeholder="e.g., MIT Muzaffarpur"
-        value={userPreferences.college || ''}
-        onChangeText={(text) => updatePreference('college', text)}
+        value={collegeInput}
+        onChangeText={setCollegeInput} // Update local state
         placeholderTextColor={COLORS.textSecondary}
       />
-      */}
-
-      <NextButton title="Finish Setup" onPress={handleFinish} loading={loading} />
+      
+      <View style={styles.buttonWrapper}>
+        <NextButton title="Finish Setup" onPress={handleFinish} loading={loading} />
+      </View>
       <Text style={styles.infoText}>
         You can change these preferences later in the app settings.
       </Text>
@@ -56,7 +69,7 @@ const NotificationSettingsScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  switchContainer: {
+  settingItem: { // Renamed from switchContainer for generality
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -67,7 +80,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderColor: COLORS.lightBorder,
     borderWidth: 1,
-    marginBottom: 25,
+    marginBottom: 20, // Consistent margin
   },
   label: {
     fontSize: 16,
@@ -80,7 +93,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontWeight: '500',
     width: '100%',
-    marginTop: 20,
+    marginTop: 10, // Added some top margin
   },
   input: {
     backgroundColor: COLORS.white,
@@ -93,13 +106,24 @@ const styles = StyleSheet.create({
     color: COLORS.textTitle,
     width: '100%',
     marginBottom: 25,
+    shadowColor: COLORS.shadowColor,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   infoText: {
     marginTop: 20,
     fontSize: 13,
     color: COLORS.textSecondary,
     textAlign: 'center',
+    paddingHorizontal: 10,
   },
+  buttonWrapper: {
+    width: '100%',
+    marginTop: 10, // Adjusted margin
+    alignItems: 'center',
+  }
 });
 
 export default NotificationSettingsScreen;

@@ -16,8 +16,10 @@ const SemesterScreen = () => {
   const currentBranch = safeUserPreferences.branch; // Get from prefs set in previous screen
 
   useEffect(() => {
-    if (currentBranch?._id) {
-      fetchSemesters(currentBranch._id);
+    // Accept both object and string forms for branch
+    const branchId = typeof currentBranch === 'object' && currentBranch !== null ? currentBranch._id : currentBranch;
+    if (branchId) {
+      fetchSemesters(branchId);
     } else {
         // Should not happen if navigation flow is correct
         Alert.alert("Error", "Branch not selected. Please go back.");
@@ -50,7 +52,11 @@ const SemesterScreen = () => {
      return (
       <OnboardingWrapper title="Select Your Semester" subtitle="Tell us which semester you are in." disableScroll>
         <Text style={styles.errorText}>Error fetching semesters: {appContextError}</Text>
-         <TouchableOpacity onPress={() => currentBranch?._id && fetchSemesters(currentBranch._id)} style={styles.retryButton}>
+         <TouchableOpacity onPress={() => {
+            // Accept both object and string forms for branch
+            const branchId = typeof currentBranch === 'object' && currentBranch !== null ? currentBranch._id : currentBranch;
+            if (branchId) fetchSemesters(branchId);
+         }} style={styles.retryButton}>
             <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </OnboardingWrapper>

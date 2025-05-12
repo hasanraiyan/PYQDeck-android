@@ -1,16 +1,42 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useApp } from '../context/AppContext';
 
 export default function HomeScreen() {
   const { logout } = useAuth();
+  const { clearSelections, setOnboardingCompleted, userPreferences, personalizationCompleted, updatePreference } = useApp();
+
+  // Resets onboarding/personalization context to defaults before logout.
+  const handleLogout = async () => {
+    // Clear all AppContext selections/state (in-memory)
+    if (clearSelections) clearSelections();
+    if (setOnboardingCompleted) setOnboardingCompleted(false);
+
+    // Reset preferences to defaults ("userPreferences" keys defined in AppContext.js)
+    if (updatePreference) {
+      updatePreference('branch', null);
+      updatePreference('semester', null);
+      updatePreference('college', '');
+      updatePreference('goal', null);
+      updatePreference('frequency', null);
+      updatePreference('preferredContent', null);
+      updatePreference('notificationsEnabled', true);
+      updatePreference('language', 'English');
+    }
+
+    // Ensure future flags
+    // (No direct setter for personalizationCompleted, but will reload as false from storage after AsyncStorage.clear())
+    // Finally, perform full logout
+    await logout();
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Welcome to PYQ Deck!</Text>
       <TouchableOpacity
         style={styles.logoutButton}
-        onPress={logout}
+        onPress={handleLogout}
         accessibilityRole="button"
         accessibilityLabel="Logout"
         activeOpacity={0.85}

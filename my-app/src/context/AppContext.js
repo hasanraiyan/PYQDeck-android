@@ -1,25 +1,22 @@
+// my-app/src/context/AppContext.js
 import React, { createContext, useState, useContext, useCallback } from 'react';
-import { useAuth } from './AuthContext';
+import { useAuth } from './AuthContext'; // Ensure this path is correct
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native'; // Import Alert for debugging/errors
 
 // Create the app context
 const AppContext = createContext();
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Provider component that makes app data available to any child component that calls useApp()
+// Provider component
 export const AppProvider = ({ children }) => {
-  const { authAxios } = useAuth();
+  const { authAxios, currentUser } = useAuth();
 
-  // Onboarding state — in context + persistent
+  // ---- EXISTING FEATURE ONBOARDING ----
   const [onboardingCompleted, setOnboardingCompletedState] = useState(false);
-  const [personalizationCompleted, setPersonalizationCompletedState] = useState(false);
-
   React.useEffect(() => {
     const loadOnboarding = async () => {
       const stored = await AsyncStorage.getItem('onboardingCompleted');
       setOnboardingCompletedState(stored === 'true');
-      const personalization = await AsyncStorage.getItem('personalizationCompleted');
-      setPersonalizationCompletedState(personalization === 'true');
     };
     loadOnboarding();
   }, []);
@@ -28,11 +25,45 @@ export const AppProvider = ({ children }) => {
     setOnboardingCompletedState(!!value);
     await AsyncStorage.setItem('onboardingCompleted', value ? 'true' : 'false');
   };
+  // ---- END EXISTING FEATURE ONBOARDING ----
 
-  const setPersonalizationCompleted = async (value) => {
-    setPersonalizationCompletedState(!!value);
-    await AsyncStorage.setItem('personalizationCompleted', value ? 'true' : 'false');
-  };
+  // ---- NEW PERSONALIZATION ONBOARDING ----
+  const [personalizationCompleted, setPersonalizationCompletedState] = useState(false);
+  const [userPreferences, setUserPreferences] = useState({
+    branch: null,
+    semester: null,
+    college: '', // Optional
+    goal: null, // Primary Use Case
+    frequency: null,
+    preferredContent: null,
+    notificationsEnabled: true, // Default
+    language: 'English', // Optional, default
+  });
+  const [initialAppLoading, setInitialAppLoading] = useState(true);
+
+  React.useEffect(() => {
+    const loadPersonalizationData = async () => {
+      setInitialAppLoading(true); // Start loading
+      try {
+        const storedPersonalizationCompleted = await AsyncStorage.getItem('personalizationCompleted');
+        setPersonalizationCompletedState(storedPersonalizationCompleted === 'true');
+
+        const storedUserPrefs = await AsyncStorage.getItem('userPreferences');
+        if (storedUserPrefs) {
+          const parsedPrefs = JSON.parse(storedUserPrefs);
+          // Ensure default values are kept if some prefs are missing from storage
+          setUserPreferences(prev => ({ ...prev, ...parsedPrefs }));
+        }
+      } catch (e) {
+        console.error("Failed to load personalization data from storage", e);
+         Alert.alert("Loading Error", "Could not load saved preferences.");
+      } finally {
+        setInitialAppLoading(false); // Finish loading
+      }
+    };
+    loadPersonalizationData();
+  }, []);
+  // ---- END NEW PERSONALIZATION ONBOARDING ----
 
   // State for branches, semesters, subjects, and questions
   const [branches, setBranches] = useState([]);
@@ -43,34 +74,7 @@ export const AppProvider = ({ children }) => {
   const [currentSemester, setCurrentSemester] = useState(null);
   const [currentSubject, setCurrentSubject] = useState(null);
 
-  // User Preferences state
-  const [userPreferences, setUserPreferences] = useState({});
-
-  // Load preferences from AsyncStorage on mount
-  React.useEffect(() => {
-    const loadPreferences = async () => {
-      try {
-        const storedPrefs = await AsyncStorage.getItem('userPreferences');
-        if (storedPrefs) {
-          setUserPreferences(JSON.parse(storedPrefs));
-        }
-      } catch (e) {
-        // Optionally handle error
-      }
-    };
-    loadPreferences();
-  }, []);
-
-  // Function to update a single preference and persist it
-  const updatePreference = (key, value) => {
-    setUserPreferences(prev => {
-      const updated = { ...prev, [key]: value };
-      AsyncStorage.setItem('userPreferences', JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  // Loading and error states
+  // General loading and error states for data fetching
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -84,9 +88,11 @@ export const AppProvider = ({ children }) => {
         setBranches(response.data.data);
         return response.data.data;
       }
+      setBranches([]); // Ensure it's an empty array on failure or no data
       return [];
-    } catch (error) {
-      setError(error.response?.data?.error || 'Failed to fetch branches. Please try again.');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to fetch branches. Please try again.');
+      setBranches([]);
       return [];
     } finally {
       setLoading(false);
@@ -95,8 +101,10 @@ export const AppProvider = ({ children }) => {
 
   // Fetch semesters for a specific branch
   const fetchSemesters = useCallback(async (branchId) => {
-    if (!branchId) return [];
-    
+    if (!branchId) {
+        setSemesters([]);
+        return [];
+    }
     setLoading(true);
     setError(null);
     try {
@@ -105,9 +113,11 @@ export const AppProvider = ({ children }) => {
         setSemesters(response.data.data);
         return response.data.data;
       }
+      setSemesters([]);
       return [];
-    } catch (error) {
-      setError('Failed to fetch semesters. Please try again.');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to fetch semesters. Please try again.');
+      setSemesters([]);
       return [];
     } finally {
       setLoading(false);
@@ -116,8 +126,10 @@ export const AppProvider = ({ children }) => {
 
   // Fetch subjects for a specific semester
   const fetchSubjects = useCallback(async (semesterId) => {
-    if (!semesterId) return [];
-    
+    if (!semesterId) {
+        setSubjects([]);
+        return [];
+    }
     setLoading(true);
     setError(null);
     try {
@@ -126,9 +138,11 @@ export const AppProvider = ({ children }) => {
         setSubjects(response.data.data);
         return response.data.data;
       }
+      setSubjects([]);
       return [];
-    } catch (error) {
-      setError('Failed to fetch subjects. Please try again.');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to fetch subjects. Please try again.');
+      setSubjects([]);
       return [];
     } finally {
       setLoading(false);
@@ -137,12 +151,13 @@ export const AppProvider = ({ children }) => {
 
   // Fetch questions for a specific subject
   const fetchQuestions = useCallback(async (subjectId, filters = {}) => {
-    if (!subjectId) return { questions: [], pagination: {} };
-    
+    if (!subjectId) {
+        setQuestions([]);
+        return { questions: [], pagination: {} };
+    }
     setLoading(true);
     setError(null);
     try {
-      // Build query string from filters
       const queryParams = new URLSearchParams();
       if (filters.year) queryParams.append('year', filters.year);
       if (filters.type) queryParams.append('type', filters.type);
@@ -161,9 +176,11 @@ export const AppProvider = ({ children }) => {
           pagination: { count, totalPages, currentPage }
         };
       }
+      setQuestions([]);
       return { questions: [], pagination: {} };
-    } catch (error) {
-      setError('Failed to fetch questions. Please try again.');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to fetch questions. Please try again.');
+      setQuestions([]);
       return { questions: [], pagination: {} };
     } finally {
       setLoading(false);
@@ -175,7 +192,6 @@ export const AppProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      // Build query string from filters and search query
       const queryParams = new URLSearchParams();
       queryParams.append('q', searchQuery);
       if (filters.year) queryParams.append('year', filters.year);
@@ -187,14 +203,15 @@ export const AppProvider = ({ children }) => {
       
       if (response.data.success) {
         const { data, count, totalPages, currentPage } = response.data;
+        // Assuming search results shouldn't overwrite the main `questions` state used by `fetchQuestions`
         return {
           questions: data,
           pagination: { count, totalPages, currentPage }
         };
       }
       return { questions: [], pagination: {} };
-    } catch (error) {
-      setError('Failed to search questions. Please try again.');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to search questions. Please try again.');
       return { questions: [], pagination: {} };
     } finally {
       setLoading(false);
@@ -204,17 +221,13 @@ export const AppProvider = ({ children }) => {
   // Get details for a specific branch
   const getBranchDetails = useCallback(async (branchId) => {
     if (!branchId) return null;
-    
     setLoading(true);
     setError(null);
     try {
       const response = await authAxios.get(`/branches/${branchId}`);
-      if (response.data.success) {
-        return response.data.data;
-      }
-      return null;
-    } catch (error) {
-      setError('Failed to fetch branch details. Please try again.');
+      return response.data.success ? response.data.data : null;
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to fetch branch details.');
       return null;
     } finally {
       setLoading(false);
@@ -224,17 +237,13 @@ export const AppProvider = ({ children }) => {
   // Get details for a specific semester
   const getSemesterDetails = useCallback(async (semesterId) => {
     if (!semesterId) return null;
-    
     setLoading(true);
     setError(null);
     try {
       const response = await authAxios.get(`/semesters/${semesterId}`);
-      if (response.data.success) {
-        return response.data.data;
-      }
-      return null;
-    } catch (error) {
-      setError('Failed to fetch semester details. Please try again.');
+      return response.data.success ? response.data.data : null;
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to fetch semester details.');
       return null;
     } finally {
       setLoading(false);
@@ -244,17 +253,13 @@ export const AppProvider = ({ children }) => {
   // Get details for a specific subject
   const getSubjectDetails = useCallback(async (subjectId) => {
     if (!subjectId) return null;
-    
     setLoading(true);
     setError(null);
     try {
       const response = await authAxios.get(`/subjects/${subjectId}`);
-      if (response.data.success) {
-        return response.data.data;
-      }
-      return null;
-    } catch (error) {
-      setError('Failed to fetch subject details. Please try again.');
+      return response.data.success ? response.data.data : null;
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to fetch subject details.');
       return null;
     } finally {
       setLoading(false);
@@ -265,7 +270,10 @@ export const AppProvider = ({ children }) => {
   const selectBranch = useCallback(async (branch) => {
     setCurrentBranch(branch);
     setCurrentSemester(null);
+    setSemesters([]); // Clear previous semesters
     setCurrentSubject(null);
+    setSubjects([]); // Clear previous subjects
+    setQuestions([]); // Clear previous questions
     if (branch && branch._id) {
       return await fetchSemesters(branch._id);
     }
@@ -276,6 +284,8 @@ export const AppProvider = ({ children }) => {
   const selectSemester = useCallback(async (semester) => {
     setCurrentSemester(semester);
     setCurrentSubject(null);
+    setSubjects([]); // Clear previous subjects
+    setQuestions([]); // Clear previous questions
     if (semester && semester._id) {
       return await fetchSubjects(semester._id);
     }
@@ -285,6 +295,7 @@ export const AppProvider = ({ children }) => {
   // Set current subject and fetch its questions
   const selectSubject = useCallback(async (subject, filters = {}) => {
     setCurrentSubject(subject);
+    setQuestions([]); // Clear previous questions
     if (subject && subject._id) {
       return await fetchQuestions(subject._id, filters);
     }
@@ -301,11 +312,75 @@ export const AppProvider = ({ children }) => {
     setQuestions([]);
   }, []);
 
+  // ---- NEW PERSONALIZATION METHODS ----
+  const updatePreference = useCallback((key, value) => {
+    setUserPreferences(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const savePersonalizationPreferences = useCallback(async (finalNotificationsEnabledValue) => {
+    setLoading(true); // Use the general loading state for this operation too
+    setError(null);
+    
+    // Log current state for debugging
+    console.log("[AppContext] Attempting to save preferences...");
+    console.log("[AppContext] CurrentUser for ID:", currentUser?._id);
+    console.log("[AppContext] UserPreferences state before save (notifications might be stale here):", userPreferences);
+    console.log("[AppContext] finalNotificationsEnabledValue passed to save:", finalNotificationsEnabledValue);
+
+
+    try {
+      const finalPrefsToStoreInStorage = {
+        userId: currentUser?._id || 'unknown_user_id_in_prefs',
+        // Ensure branch and semester are simplified to their key identifiers or relevant string
+        branch: userPreferences.branch?.branch_code || userPreferences.branch?.name || userPreferences.branch || null,
+        semester: userPreferences.semester?.number || userPreferences.semester || null,
+        college: userPreferences.college || null, // Already a string or null
+        goal: userPreferences.goal || null,
+        frequency: userPreferences.frequency || null,
+        preferredContent: userPreferences.preferredContent || null,
+        notifications: finalNotificationsEnabledValue, // Use the directly passed value
+        language: userPreferences.language || 'English',
+      };
+      console.log("[AppContext] Object being stored in AsyncStorage:", JSON.stringify(finalPrefsToStoreInStorage, null, 2));
+
+      await AsyncStorage.setItem('userPreferences', JSON.stringify(finalPrefsToStoreInStorage));
+      await AsyncStorage.setItem('personalizationCompleted', 'true');
+      
+      // Update the AppContext state to reflect exactly what was saved
+      // This also ensures that if userPreferences had complex objects for branch/semester,
+      // the context state is now aligned with the simplified stored version.
+      setUserPreferences(finalPrefsToStoreInStorage); 
+      setPersonalizationCompletedState(true);
+      
+      console.log("[AppContext] Preferences saved successfully. personalizationCompleted set to true.");
+      return true; // Indicate success
+    } catch (e) {
+      console.error("[AppContext] Failed to save user preferences:", e);
+      const errorMessage = e.message || "An unknown error occurred during save.";
+      setError("Failed to save preferences. Error: " + errorMessage);
+      Alert.alert("Save Error", "Could not save preferences: " + errorMessage);
+      
+      // Attempt to revert completion state on failure if it was prematurely set
+      setPersonalizationCompletedState(false); 
+      try {
+        await AsyncStorage.setItem('personalizationCompleted', 'false'); 
+      } catch (revertError) {
+        console.error("[AppContext] Failed to revert personalizationCompleted flag in storage", revertError);
+      }
+      return false; // Indicate failure
+    } finally {
+      setLoading(false);
+    }
+  }, [currentUser, userPreferences]); // Dependencies: if currentUser or userPreferences (the object reference) change, recreate.
+
+
   // Value object that will be provided to consumers of this context
   const value = {
-    // App-related
+    // Existing Feature Onboarding
     onboardingCompleted,
     setOnboardingCompleted,
+
+    initialAppLoading, // For personalization flags and userPrefs loading
 
     // Data
     branches,
@@ -315,12 +390,8 @@ export const AppProvider = ({ children }) => {
     currentBranch,
     currentSemester,
     currentSubject,
-    loading,
-    error,
-
-    // User Preferences
-    userPreferences,
-    updatePreference,
+    loading, // General loading for data fetching operations (branches, sems, etc.)
+    error,   // General error for data fetching operations
 
     // Methods
     fetchBranches,
@@ -335,6 +406,14 @@ export const AppProvider = ({ children }) => {
     selectSemester,
     selectSubject,
     clearSelections,
+
+    // New Personalization Onboarding
+    personalizationCompleted,
+    userPreferences,
+    updatePreference,
+    savePersonalizationPreferences,
+    authAxios, // Expose authAxios if other parts of app might need it through AppContext
+    currentUser, // Expose currentUser if needed by AppContext consumers
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
