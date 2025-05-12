@@ -1,6 +1,7 @@
 // my-app/src/screens/onboarding/NotificationSettingsScreen.js
 import React, { useState } from 'react';
-import { View, Text, Switch, StyleSheet, Alert, Dimensions, TextInput } from 'react-native'; // Added TextInput
+import { View, Text, Switch, StyleSheet, Alert, Dimensions, TextInput } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useApp } from '../../context/AppContext';
 import OnboardingWrapper from '../../components/onboarding/OnboardingWrapper';
 import NextButton from '../../components/onboarding/NextButton';
@@ -38,26 +39,38 @@ const NotificationSettingsScreen = () => {
 
   return (
     <OnboardingWrapper title="Stay Updated" subtitle="Customize your final preferences.">
-      <View style={styles.settingItem}>
-        <Text style={styles.label}>Receive Notifications</Text>
-        <Switch
-          trackColor={{ false: COLORS.inactiveDot, true: COLORS.primaryDark }}
-          thumbColor={notificationsEnabled ? COLORS.primary : COLORS.mediumGray}
-          ios_backgroundColor={COLORS.lightBorder}
-          onValueChange={toggleSwitch}
-          value={notificationsEnabled}
+      <View style={styles.card}>
+        <View style={styles.settingItem}>
+          <MaterialCommunityIcons name="bell-ring-outline" size={24} color={COLORS.primaryDark} style={styles.icon} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.label}>Receive Notifications</Text>
+            <Text style={styles.helpText}>Get important updates, reminders, and news.</Text>
+          </View>
+          <Switch
+            trackColor={{ false: COLORS.inactiveDot, true: COLORS.primaryDark }}
+            thumbColor={notificationsEnabled ? COLORS.primary : COLORS.mediumGray}
+            ios_backgroundColor={COLORS.lightBorder}
+            onValueChange={toggleSwitch}
+            value={notificationsEnabled}
+          />
+        </View>
+
+        <View style={styles.settingItem}>
+          <MaterialCommunityIcons name="school-outline" size={24} color={COLORS.primaryDark} style={styles.icon} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.label}>College <Text style={{ color: COLORS.textSecondary, fontWeight: '400' }}>(Optional)</Text></Text>
+            <Text style={styles.helpText}>Enter your institute name for more personalized experience.</Text>
+          </View>
+        </View>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g., MIT Muzaffarpur"
+          value={collegeInput}
+          onChangeText={setCollegeInput} // Update local state
+          placeholderTextColor={COLORS.textSecondary}
         />
       </View>
-      
-      <Text style={styles.labelOptional}>College (Optional)</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="e.g., MIT Muzaffarpur"
-        value={collegeInput}
-        onChangeText={setCollegeInput} // Update local state
-        placeholderTextColor={COLORS.textSecondary}
-      />
-      
+
       <View style={styles.buttonWrapper}>
         <NextButton title="Finish Setup" onPress={handleFinish} loading={loading} />
       </View>
@@ -69,59 +82,66 @@ const NotificationSettingsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  settingItem: { // Renamed from switchContainer for generality
+  card: {
+    width: '100%',
+    backgroundColor: COLORS.white,
+
+    padding: 15,
+    marginBottom: 22,
+    alignSelf: 'center',
+  },
+  settingItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    paddingVertical: 15,
-    paddingHorizontal: 10,
-    backgroundColor: COLORS.white,
-    borderRadius: 8,
-    borderColor: COLORS.lightBorder,
-    borderWidth: 1,
-    marginBottom: 20, // Consistent margin
+    marginBottom: 12,
+    gap: 10,
+  },
+  icon: {
+    marginRight: 13,
+    minWidth: 28,
+    alignSelf: 'flex-start',
+    marginTop: 1,
   },
   label: {
-    fontSize: 16,
+    fontSize: 18,
     color: COLORS.textTitle,
-    fontWeight: '500',
+    fontWeight: '600',
+    marginBottom: 2,
   },
-  labelOptional: {
-    fontSize: 16,
-    color: COLORS.textTitle,
-    marginBottom: 8,
-    fontWeight: '500',
-    width: '100%',
-    marginTop: 10, // Added some top margin
+  helpText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+    marginBottom: 1,
   },
   input: {
     backgroundColor: COLORS.white,
     paddingVertical: 12,
     paddingHorizontal: 15,
     borderRadius: 8,
-    fontSize: 16,
+    fontSize: 17,
     borderWidth: 1,
     borderColor: COLORS.lightBorder,
     color: COLORS.textTitle,
     width: '100%',
-    marginBottom: 25,
+    marginBottom: 8,
     shadowColor: COLORS.shadowColor,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 2,
     elevation: 1,
   },
   infoText: {
-    marginTop: 20,
-    fontSize: 13,
+    marginTop: 16,
+    fontSize: 15,
     color: COLORS.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 10,
   },
   buttonWrapper: {
     width: '100%',
-    marginTop: 10, // Adjusted margin
+    marginTop: 32,
     alignItems: 'center',
   }
 });
