@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  StatusBar,
 } from 'react-native';
 import { useApp } from '../../context/AppContext';
 import { useNavigation } from '@react-navigation/native';
@@ -67,11 +68,13 @@ const SemesterScreen = () => {
   };
 
   return (
-    <OnboardingWrapper
-      title="Select Your Semester"
-      subtitle="Tell us which semester you're currently in."
-      disableScroll
-    >
+    <>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} animated />
+      <OnboardingWrapper
+        title="Select Your Semester"
+        subtitle="Tell us which semester you're currently in."
+        disableScroll
+      >
       {appContextLoading && semesters.length === 0 ? (
         <ActivityIndicator style={styles.loader} size="large" color={COLORS.primary} />
       ) : appContextError ? (
@@ -96,7 +99,8 @@ const SemesterScreen = () => {
           />
         </View>
       )}
-    </OnboardingWrapper>
+      </OnboardingWrapper>
+    </>
   );
 };
 

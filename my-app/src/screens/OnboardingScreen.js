@@ -9,6 +9,7 @@ import {
     Animated,
     Platform,
     SafeAreaView,
+    StatusBar,
 } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 import { useNavigation } from '@react-navigation/native';
@@ -144,6 +145,7 @@ export default function OnboardingScreen() {
 
     return (
         <SafeAreaView style={styles.safeArea}>
+            <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} animated />
             <View style={styles.container}>
                 {/* Step Progress Label */}
                 <View style={styles.stepIndicatorWrapper}>

@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  StatusBar,
 } from 'react-native';
 import { useApp } from '../../context/AppContext';
 import { useNavigation } from '@react-navigation/native';
@@ -66,11 +67,13 @@ const BranchScreen = () => {
   };
 
   return (
-    <OnboardingWrapper
-      title="Select Your Branch"
-      subtitle="Choose your field of study to personalize your experience."
-      disableScroll
-    >
+    <>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} animated />
+      <OnboardingWrapper
+        title="Select Your Branch"
+        subtitle="Choose your field of study to personalize your experience."
+        disableScroll
+      >
       {appContextLoading && branches.length === 0 ? (
         <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
       ) : appContextError ? (
@@ -95,7 +98,8 @@ const BranchScreen = () => {
           />
         </View>
       )}
-    </OnboardingWrapper>
+      </OnboardingWrapper>
+    </>
   );
 };
 

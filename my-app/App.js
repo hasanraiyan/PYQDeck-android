@@ -1,18 +1,20 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { AppProvider } from './src/context/AppContext';
+import { AppProvider, useApp } from './src/context/AppContext';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import AuthNavigator from './src/navigation/AuthNavigator';
+import OnboardingStack from './src/navigation/OnboardingStack';
 import PersonalizationOnboardingNavigator from './src/navigation/PersonalizationOnboardingNavigator';
 import { ActivityIndicator, View } from 'react-native';
 import GlobalErrorBoundary from './src/components/GlobalErrorBoundary';
 
 function RootNavigation() {
-  const { currentUser, token, logoutCount, initialAuthLoading, onboardingCompleted } = useAuth();
+  const { currentUser, token, logoutCount, initialAuthLoading } = useAuth();
+  const { onboardingCompleted, personalizationCompleted, initialAppLoading } = useApp();
 
-  // Show a loading spinner while checking token/auth state
-  if (initialAuthLoading) {
+  // Show a loading spinner while checking token/auth or app state
+  if (initialAuthLoading || initialAppLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
         <ActivityIndicator size="large" color="#4834d4" />
@@ -21,29 +23,31 @@ function RootNavigation() {
   }
 
   let Navigator = null;
-  if (!currentUser || !token) {
+  if (!onboardingCompleted) {
+    Navigator = <OnboardingStack />;
+  } else if (!currentUser || !token) {
     Navigator = <AuthNavigator />;
-  } else if (!onboardingCompleted) {
+  } else if (!personalizationCompleted) {
     Navigator = <PersonalizationOnboardingNavigator />;
   } else {
     Navigator = <AppNavigator />;
   }
 
   return (
-    <AppProvider key={logoutCount.toString()}>
-      <GlobalErrorBoundary>
-        <NavigationContainer>
-          {Navigator}
-        </NavigationContainer>
-      </GlobalErrorBoundary>
-    </AppProvider>
+    <GlobalErrorBoundary>
+      <NavigationContainer>
+        {Navigator}
+      </NavigationContainer>
+    </GlobalErrorBoundary>
   );
 }
 
 export default function App() {
   return (
     <AuthProvider>
-      <RootNavigation />
+      <AppProvider>
+        <RootNavigation />
+      </AppProvider>
     </AuthProvider>
   );
 }

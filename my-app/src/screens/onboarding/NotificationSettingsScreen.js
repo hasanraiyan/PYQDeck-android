@@ -1,6 +1,6 @@
 // my-app/src/screens/onboarding/NotificationSettingsScreen.js
 import React, { useState } from 'react';
-import { View, Text, Switch, StyleSheet, Alert, Dimensions, TextInput } from 'react-native';
+import { View, Text, Switch, StyleSheet, Alert, Dimensions, TextInput, StatusBar } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useApp } from '../../context/AppContext';
 import OnboardingWrapper from '../../components/onboarding/OnboardingWrapper';
@@ -41,46 +41,49 @@ const NotificationSettingsScreen = () => {
   };
 
   return (
-    <OnboardingWrapper title="Stay Updated" subtitle="Customize your final preferences.">
-      <View style={styles.card}>
-        <View style={styles.settingItem}>
-          <MaterialCommunityIcons name="bell-ring-outline" size={24} color={COLORS.primaryDark} style={styles.icon} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Receive Notifications</Text>
-            <Text style={styles.helpText}>Get important updates, reminders, and news.</Text>
+    <>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} animated />
+      <OnboardingWrapper title="Stay Updated" subtitle="Customize your final preferences.">
+        <View style={styles.card}>
+          <View style={styles.settingItem}>
+            <MaterialCommunityIcons name="bell-ring-outline" size={24} color={COLORS.primaryDark} style={styles.icon} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Receive Notifications</Text>
+              <Text style={styles.helpText}>Get important updates, reminders, and news.</Text>
+            </View>
+            <Switch
+              trackColor={{ false: COLORS.inactiveDot, true: COLORS.primaryDark }}
+              thumbColor={notificationsEnabled ? COLORS.primary : COLORS.mediumGray}
+              ios_backgroundColor={COLORS.lightBorder}
+              onValueChange={toggleSwitch}
+              value={notificationsEnabled}
+            />
           </View>
-          <Switch
-            trackColor={{ false: COLORS.inactiveDot, true: COLORS.primaryDark }}
-            thumbColor={notificationsEnabled ? COLORS.primary : COLORS.mediumGray}
-            ios_backgroundColor={COLORS.lightBorder}
-            onValueChange={toggleSwitch}
-            value={notificationsEnabled}
+
+          <View style={styles.settingItem}>
+            <MaterialCommunityIcons name="school-outline" size={24} color={COLORS.primaryDark} style={styles.icon} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>College <Text style={{ color: COLORS.textSecondary, fontWeight: '400' }}>(Optional)</Text></Text>
+              <Text style={styles.helpText}>Enter your institute name for more personalized experience.</Text>
+            </View>
+          </View>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g., MIT Muzaffarpur"
+            value={collegeInput}
+            onChangeText={setCollegeInput} // Update local state
+            placeholderTextColor={COLORS.textSecondary}
           />
         </View>
 
-        <View style={styles.settingItem}>
-          <MaterialCommunityIcons name="school-outline" size={24} color={COLORS.primaryDark} style={styles.icon} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>College <Text style={{ color: COLORS.textSecondary, fontWeight: '400' }}>(Optional)</Text></Text>
-            <Text style={styles.helpText}>Enter your institute name for more personalized experience.</Text>
-          </View>
+        <View style={styles.buttonWrapper}>
+          <NextButton title="Finish Setup" onPress={handleFinish} loading={loading} />
         </View>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g., MIT Muzaffarpur"
-          value={collegeInput}
-          onChangeText={setCollegeInput} // Update local state
-          placeholderTextColor={COLORS.textSecondary}
-        />
-      </View>
-
-      <View style={styles.buttonWrapper}>
-        <NextButton title="Finish Setup" onPress={handleFinish} loading={loading} />
-      </View>
-      <Text style={styles.infoText}>
-        You can change these preferences later in the app settings.
-      </Text>
-    </OnboardingWrapper>
+        <Text style={styles.infoText}>
+          You can change these preferences later in the app settings.
+        </Text>
+      </OnboardingWrapper>
+    </>
   );
 };
 

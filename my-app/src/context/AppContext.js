@@ -389,6 +389,14 @@ export const AppProvider = ({ children }) => {
   }, [currentUser, userPreferences]); // Dependencies: if currentUser or userPreferences (the object reference) change, recreate.
 
 
+  // Robust derived personalized-onboarding check
+  const personalizationReady =
+    !!userPreferences.branch &&
+    !!userPreferences.semester &&
+    !!userPreferences.goal &&
+    !!userPreferences.frequency &&
+    !!userPreferences.preferredContent;
+
   // Value object that will be provided to consumers of this context
   const value = {
     // Existing Feature Onboarding
@@ -423,7 +431,7 @@ export const AppProvider = ({ children }) => {
     clearSelections,
 
     // New Personalization Onboarding
-    personalizationCompleted,
+    personalizationCompleted: personalizationReady,  // <--- robust check is now used for navigation logic
     userPreferences,
     updatePreference,
     savePersonalizationPreferences,

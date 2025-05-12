@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Alert, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Alert, Dimensions, StatusBar } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useApp } from '../../context/AppContext';
 import { useNavigation } from '@react-navigation/native';
@@ -43,68 +43,71 @@ const PreferencesScreen = () => {
   };
 
   return (
-    <OnboardingWrapper title="Your Learning Style" subtitle="Tailor PYQDeck to fit your habits.">
+    <>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} animated />
+      <OnboardingWrapper title="Your Learning Style" subtitle="Tailor PYQDeck to fit your habits.">
 
-      {/* Goal Picker */}
-      <View style={styles.pickerWrapper}>
-        <Text style={styles.label}>Primary Goal</Text>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={values.goal}
-            onValueChange={(val) => handleChange('goal', val)}
-            enabled={!loading}
-          >
-            <Picker.Item label="Select goal..." value="" />
-            <Picker.Item label="Revising for Exams" value="Exam Revision" />
-            <Picker.Item label="Clearing Backlogs" value="Backlogs" />
-            <Picker.Item label="Regular Practice" value="Browsing" />
-            <Picker.Item label="Subject-specific Prep" value="Subject Prep" />
-          </Picker>
+        {/* Goal Picker */}
+        <View style={styles.pickerWrapper}>
+          <Text style={styles.label}>Primary Goal</Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={values.goal}
+              onValueChange={(val) => handleChange('goal', val)}
+              enabled={!loading}
+            >
+              <Picker.Item label="Select goal..." value="" />
+              <Picker.Item label="Revising for Exams" value="Exam Revision" />
+              <Picker.Item label="Clearing Backlogs" value="Backlogs" />
+              <Picker.Item label="Regular Practice" value="Browsing" />
+              <Picker.Item label="Subject-specific Prep" value="Subject Prep" />
+            </Picker>
+          </View>
         </View>
-      </View>
 
-      {/* Frequency Picker */}
-      <View style={styles.pickerWrapper}>
-        <Text style={styles.label}>Study Frequency</Text>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={values.frequency}
-            onValueChange={(val) => handleChange('frequency', val)}
-            enabled={!loading}
-          >
-            <Picker.Item label="Select frequency..." value="" />
-            <Picker.Item label="Daily" value="Daily" />
-            <Picker.Item label="Few times/wk" value="Weekly" />
-            <Picker.Item label="Exam-Cram" value="Exam-Cram" />
-          </Picker>
+        {/* Frequency Picker */}
+        <View style={styles.pickerWrapper}>
+          <Text style={styles.label}>Study Frequency</Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={values.frequency}
+              onValueChange={(val) => handleChange('frequency', val)}
+              enabled={!loading}
+            >
+              <Picker.Item label="Select frequency..." value="" />
+              <Picker.Item label="Daily" value="Daily" />
+              <Picker.Item label="Few times/wk" value="Weekly" />
+              <Picker.Item label="Exam-Cram" value="Exam-Cram" />
+            </Picker>
+          </View>
         </View>
-      </View>
 
-      {/* Content Format Picker */}
-      <View style={styles.pickerWrapper}>
-        <Text style={styles.label}>Content Format</Text>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={values.preferredContent}
-            onValueChange={(val) => handleChange('preferredContent', val)}
-            enabled={!loading}
-          >
-            <Picker.Item label="Select format..." value="" />
-            <Picker.Item label="MCQs" value="MCQ" />
-            <Picker.Item label="Theory Questions" value="Theory" />
-            <Picker.Item label="Mixed" value="Mixed" />
-          </Picker>
+        {/* Content Format Picker */}
+        <View style={styles.pickerWrapper}>
+          <Text style={styles.label}>Content Format</Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={values.preferredContent}
+              onValueChange={(val) => handleChange('preferredContent', val)}
+              enabled={!loading}
+            >
+              <Picker.Item label="Select format..." value="" />
+              <Picker.Item label="MCQs" value="MCQ" />
+              <Picker.Item label="Theory Questions" value="Theory" />
+              <Picker.Item label="Mixed" value="Mixed" />
+            </Picker>
+          </View>
         </View>
-      </View>
 
-      <NextButton
-        title="Next"
-        onPress={handleNext}
-        disabled={loading}
-        containerStyle={styles.nextBtn}
-      />
+        <NextButton
+          title="Next"
+          onPress={handleNext}
+          disabled={loading}
+          containerStyle={styles.nextBtn}
+        />
 
-    </OnboardingWrapper>
+      </OnboardingWrapper>
+    </>
   );
 };
 
