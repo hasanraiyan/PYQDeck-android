@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, FlatList, Platform
+  View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, FlatList, Platform, StatusBar
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useApp } from '../../context/AppContext';
@@ -13,7 +13,7 @@ export default function QuestionsListScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const { subjectId, year, module, subject } = route.params || {};
-  const { fetchQuestions } = useApp();
+  const { fetchQuestions, userPreferences } = useApp();
 
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,8 +49,20 @@ export default function QuestionsListScreen() {
   if (year) title += ` • ${year}`;
   else if (module?.name) title += ` • ${module.name}`;
 
+  // Header subtitle: branch and semester, with fallback
+  const branchName =
+    subject?.branch?.name ||
+    userPreferences?.branch?.name ||
+    'N/A';
+  const semesterNumber =
+    subject?.semester?.number ||
+    userPreferences?.semester?.number ||
+    'N/A';
+
   return (
     <View style={{ flex: 1, backgroundColor: '#f5f6fb' }}>
+      {/* Status bar to match SubjectDetailScreen */}
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryDark} />
       {/* Header */}
       <View style={styles.headerBar}>
         <TouchableOpacity
@@ -58,9 +70,16 @@ export default function QuestionsListScreen() {
           style={styles.headerBackBtn}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 25 }}
         >
-          <MaterialCommunityIcons name="arrow-left" size={29} color="#fff" />
+          <MaterialCommunityIcons name="arrow-left" size={28} color={COLORS.white} />
         </TouchableOpacity>
-        <Text numberOfLines={1} style={styles.headerTitle}>{title}</Text>
+        <View style={styles.headerTitleContainer}>
+          <Text numberOfLines={1} style={styles.headerTitleMain}>
+            {title}
+          </Text>
+          <Text numberOfLines={1} style={styles.headerSubtitle}>
+            {branchName} • Sem {semesterNumber}
+          </Text>
+        </View>
       </View>
 
       <FlatList
@@ -106,6 +125,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.primaryDark,
+    paddingTop: Platform.OS === 'android' ? 10 : 10,
     paddingBottom: 15,
     paddingHorizontal: 15,
     elevation: 4,
@@ -114,11 +134,18 @@ const styles = StyleSheet.create({
     padding: 5,
     marginRight: 10,
   },
-  headerTitle: {
+  headerTitleContainer: {
+    flex: 1,
+  },
+  headerTitleMain: {
     color: COLORS.white,
     fontSize: 20,
-    flex: 1,
     fontWeight: 'bold',
+  },
+  headerSubtitle: {
+    color: COLORS.white,
+    fontSize: 13,
+    opacity: 0.9,
   },
   emptyListContainer: {
     flex: 1,

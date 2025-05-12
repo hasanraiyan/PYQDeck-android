@@ -158,7 +158,8 @@ export default function SubjectDetailScreen() {
     }
 
     function removeModulePrefix(str) {
-      return str.replace(/^Module\s*\d+\s*:\s*/i, '');
+      // str.replace(/^Module\s*\d+\s*:\s*/i, '')
+      return str;
     }
 
     let flat = Array.isArray(modulesRaw) && Array.isArray(modulesRaw[0]) ? modulesRaw.flat() : modulesRaw;
@@ -303,7 +304,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   headerSubtitle: {
-    color: COLORS.accent, // Lighter text for subtitle
+    color: COLORS.white, // Lighter text for subtitle
     fontSize: 13,
     opacity: 0.9,
   },

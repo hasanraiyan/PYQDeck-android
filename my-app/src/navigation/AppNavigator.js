@@ -23,7 +23,6 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="HomeFeed" component={HomeScreen} />
       <HomeStack.Screen name="SubjectDetail" component={SubjectDetailScreen} />
       <HomeStack.Screen name="QuestionsList" component={QuestionsListScreen} />
-      {/* Additional screens as needed */}
     </HomeStack.Navigator>
   );
 }

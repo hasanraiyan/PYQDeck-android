@@ -152,12 +152,53 @@ export default function HomeScreen() {
     </>
   );
 
-  if (initialFeedLoading || (loading && (!subjects || subjects.length === 0))) {
+if (initialFeedLoading || (loading && (!subjects || subjects.length === 0))) {
+    // Skeleton loader instead of spinner
+    const skeletonItems = Array.from({ length: 6 });
+
     return (
-      <View style={styles.centeredFeedback}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Loading your subjects...</Text>
-      </View>
+      <Pressable style={styles.screen} onPress={Keyboard.dismiss} accessible={false}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryDark} />
+        <View style={styles.headerRowContainer}>
+          <View style={styles.headerRowText}>
+            <Text style={styles.greetingText}>Hello, {userName}!</Text>
+            <Text style={styles.headerSubtitle}>
+              {branch ? `${branch} • ${semLabel}` : 'Select Branch/Semester'}
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Profile')}
+            accessibilityLabel="Go to profile"
+            style={styles.headerProfileBtn}
+          >
+            <MaterialCommunityIcons name="account-circle-outline" size={32} color={COLORS.primary} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.searchSection}>
+          <View style={[styles.searchBarContainer, searchFocused && styles.searchBarFocused]}>
+            <MaterialCommunityIcons name="magnify" size={22} color={searchFocused ? COLORS.primary : COLORS.textSecondary} style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search subjects or codes..."
+              placeholderTextColor={COLORS.placeholderGrey}
+              value={search}
+              editable={false}
+              selectionColor={COLORS.primary}
+            />
+          </View>
+        </View>
+        <View style={styles.skeletonListContainer}>
+          {skeletonItems.map((_, idx) => (
+            <View key={idx} style={styles.skeletonCard}>
+              <View style={styles.skeletonCardIcon} />
+              <View style={styles.skeletonCardContent}>
+                <View style={styles.skeletonLineShort} />
+                <View style={styles.skeletonLineLong} />
+              </View>
+            </View>
+          ))}
+        </View>
+      </Pressable>
     );
   }
 
@@ -176,7 +217,7 @@ export default function HomeScreen() {
 
   return (
     <Pressable style={styles.screen} onPress={Keyboard.dismiss} accessible={false}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryDark} />
       
       {/* Header row with greeting on the left and profile on the right */}
       <View style={styles.headerRowContainer}>
@@ -271,6 +312,46 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  skeletonListContainer: {
+    paddingHorizontal: SPACING,
+    paddingTop: SPACING,
+  },
+  skeletonCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: SPACING,
+    marginBottom: SPACING,
+    borderWidth: 1,
+    borderColor: COLORS.lightBorder,
+    opacity: 0.75,
+  },
+  skeletonCardIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: COLORS.accentBackground,
+    marginRight: SPACING,
+  },
+  skeletonCardContent: {
+    flex: 1,
+    marginRight: SPACING / 2,
+    justifyContent: 'center',
+  },
+  skeletonLineShort: {
+    width: '65%',
+    height: 16,
+    backgroundColor: COLORS.mediumGray,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  skeletonLineLong: {
+    width: '40%',
+    height: 12,
+    backgroundColor: COLORS.lightBorder,
+    borderRadius: 7,
+  },
   screen: {
     flex: 1,
     backgroundColor: COLORS.background, // Changed to white for a cleaner look
@@ -281,12 +362,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING,
-    paddingTop: Platform.OS === 'ios' ? SPACING * 2.5 : SPACING * 1.5,
     paddingBottom: SPACING * 0.5,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.primaryDark,
+    color: COLORS.textTitle,
+    padding: SPACING,
   },
   headerRowText: {
     flex: 1,
+    
   },
   headerProfileBtn: {
     marginLeft: 12,
@@ -302,11 +385,11 @@ const styles = StyleSheet.create({
   greetingText: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: COLORS.textTitle,
+    color: COLORS.white,
   },
   headerSubtitle: {
     fontSize: 15,
-    color: COLORS.textSubtitle,
+    color: COLORS.white,
     marginTop: 4,
   },
   searchSection: {
