@@ -17,4 +17,5 @@ export const COLORS = {
   lightGray: '#F3F4F6', // Very light background or borders
   mediumGray: '#CBD5E0', // Medium gray for less prominent text or icons
   darkGray: '#4A5567', // Darker gray, almost black
+  placeholderGrey: '#CCCCCC', // For placeholder text
 };

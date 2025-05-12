@@ -8,6 +8,7 @@ import SubjectDetailScreen from '../screens/SubjectDetailScreen';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import BrowseQuestionsScreen from '../screens/BrowseQuestionsScreen';
+import CustomTabBar from '../components/CustomTabBar';
 import QuestionsListScreen from '../screens/QuestionsListScreen';
 
 const Tab = createBottomTabNavigator();
@@ -33,21 +34,10 @@ export default function AppNavigator() {
   return (
     <Tab.Navigator
       initialRouteName="Home"
-      screenOptions={({ route }) => ({
-        tabBarActiveTintColor: '#3479f6',
-        tabBarInactiveTintColor: '#7c879e',
-        tabBarShowLabel: true,
-        tabBarLabelStyle: { fontSize: 13 },
+      tabBar={props => <CustomTabBar {...props} />}
+      screenOptions={{
         headerShown: false,
-        tabBarIcon: ({ color, size }) => {
-          let iconName;
-          if (route.name === 'Home') iconName = 'home-variant';
-          else if (route.name === 'Library') iconName = 'book-open-variant';
-          else if (route.name === 'Saved') iconName = 'heart-outline';
-          else if (route.name === 'Profile') iconName = 'account-circle-outline';
-          return <MaterialCommunityIcons name={iconName} color={color} size={size} />;
-        },
-      })}
+      }}
     >
       <Tab.Screen name="Home" component={HomeStackNavigator} />
       <Tab.Screen name="Library" component={LibraryScreen} />
